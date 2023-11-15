@@ -106,7 +106,7 @@ sim.r = sim.out %>%
 sim.n.all = sim.out %>%
   merge(
     expand.grid(
-      gen   = 0:pars$timesteps[1],
+      t     = 0:pars$timesteps[1],
       trial = 1:(nrow(pars) * trys.per)
     ),
     all.y = TRUE
