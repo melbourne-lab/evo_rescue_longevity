@@ -29,7 +29,7 @@ pars = expand.grid(
   # Heritability of fitness
   h2    = c(.25, .5, 1),
   # Gamma squared (pheno variance / sel pressure)
-  sig.z = sqrt(c(.1, .2, .4))
+  sig.z = sqrt(c(.1, .25, .4))
 ) %>%
   # Demographic rates
   mutate(
@@ -139,26 +139,8 @@ sim.n.surv = sim.out %>%
     nn   = n()
   )
 
-# sim.n %>%
-#   mutate(p0 = factor(p0)) %>%
-#   ggplot(aes(x = gen)) +
-#   geom_line(
-#     aes(
-#       y = nbar,
-#       group = p0,
-#       colour = p0
-#     )
-#   ) +
-#   geom_ribbon(
-#     aes(
-#       ymin = nbar - 2 * sqrt(nvar / trys.per),
-#       ymax = nbar + 2 * sqrt(nvar / trys.per),
-#       group = p0,
-#       fill = p0
-#     ),
-#     alpha = 0.2
-#   ) +
-#   facet_wrap(h2 ~ lstar)
+# Get 20 trials per parameter combination
+sim.disagg = sim.out %>% filter((trial %% trys.per) < 20)
 
 write.csv(
   sim.r,
@@ -176,6 +158,12 @@ write.csv(
   sim.n.surv,
   row.names = FALSE,
   file = 'run_sims/out/sim_results_m1_survsizes_n.csv'
+)
+
+write.csv(
+  sim.disagg,
+  row.names = FALSE,
+  file = 'run_sims/out/sim_results_m1_disaggregated_n.csv'
 )
 
 ### SesssionInfo (13 Nov 2023 - final run)
@@ -209,4 +197,4 @@ write.csv(
 # [9] magrittr_2.0.1   scales_1.2.1     pillar_1.6.2     rlang_1.0.6     
 # [13] cli_3.6.0        generics_0.1.0   vctrs_0.5.2      ellipsis_0.3.2  
 # [17] glue_1.4.2       purrr_0.3.4      munsell_0.5.0    compiler_4.1.2  
-# [21] pkgconfig_2.0.3  colorspace_2.0-2 tidyselect_1.1.1 tibble_3.1.3 
+# [21] pkgconfig_2.0.3  colorspace_2.0-2 tidyselect_1.1.1 tibble_3.1.3
