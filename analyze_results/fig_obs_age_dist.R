@@ -78,7 +78,7 @@ age.dist %>%
     linewidth = 0.25
   ) +
   labs(x = 'Time step', y = 'Proportion of population in age group') +
-  scale_fill_viridis_d(option = 'B', 'Age') +
+  scale_fill_viridis_d(option = 'B', 'age') +
   facet_grid(cols = vars(hert), labeller = label_parsed) +
   theme(
     panel.background = element_blank()
@@ -109,7 +109,7 @@ age.dist %>%
     linewidth = 0.25
   ) +
   labs(x = 'Time step', y = 'Proportion of population in age group') +
-  scale_fill_viridis_d(option = 'B', 'Age') +
+  scale_fill_viridis_d(option = 'B', 'age') +
   facet_grid(
     rows = vars(long), cols = vars(hert), 
     labeller = labeller(hert = label_parsed, long = label_value)
