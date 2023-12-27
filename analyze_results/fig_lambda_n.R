@@ -55,10 +55,11 @@ lambda.plot = lambda.z %>%
     sides = 'b', length = grid::unit(0.075, 'npc')
   ) +
   labs(
-    x = expression(paste('Mean population phenotype, ', bar(z))),
+    x = expression(paste('Mean population phenotype ', bar(z))),
     y = expression(lambda)
   ) +
-  scale_color_brewer(palette = 'Dark2') +
+  scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  # scale_colour_brewer(palette = 'Dark2', 'longevity') +
   scale_linetype_manual(values = c(1, 5, 2)) +
   theme(
     panel.background = element_blank(),
@@ -73,7 +74,7 @@ lambda.plot
 
 g.and.h = expand.grid(
   # Life history groups
-  s.max = c(.1, .5, .9, 1),
+  s.max = c(.1, .5, .9),
   # Time steps (x-axis)
   tstep = 0:30
 ) %>%
@@ -94,7 +95,8 @@ n.plot = g.and.h %>%
   ggplot(aes(x = tstep, y = exp(nt), group = s.max)) + 
   geom_line(aes(colour = s.max)) +
   scale_y_log10() +
-  scale_color_brewer(palette = 'Dark2') +
+  scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  # scale_colour_brewer(palette = 'Dark2', 'longevity') +
   labs(x = expression(Time ~ step ~ t), y = expression(N[t])) +
   theme(
     panel.background = element_blank(),

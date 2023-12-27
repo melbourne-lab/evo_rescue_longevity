@@ -65,8 +65,10 @@ n.all %>%
     linewidth = 0.125
   ) +
   labs(x = 'Time step', y = 'Population size') +
-  scale_fill_brewer(palette = 'Dark2', 'longevity') +
-  scale_color_brewer(palette = 'Dark2', 'longevity') +
+  scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  scale_fill_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  # scale_colour_brewer(palette = 'Dark2', 'longevity') +
+  # scale_fill_brewer(palette = 'Dark2', 'longevity') +
   facet_grid(rows = vars(varn), cols = vars(hert), labeller = label_parsed) +
   theme(
     panel.background = element_blank(),
@@ -81,7 +83,8 @@ n.all %>%
   ggplot(aes(x = t, y = psrv)) +
   geom_line(aes(colour = long), linewidth = 1.2) +
   labs(x = 'Time step', y = 'Proportion surviving') +
-  scale_color_brewer(palette = 'Dark2', 'longevity') +
+  scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  # scale_colour_brewer(palette = 'Dark2', 'longevity') +
   facet_grid(rows = vars(varn), cols = vars(hert), labeller = label_parsed) +
   theme(
     panel.background = element_blank(),

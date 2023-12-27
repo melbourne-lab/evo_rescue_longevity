@@ -96,8 +96,10 @@ z.bar %>%
     ),
     linewidth = 1.1
   ) +
-  scale_colour_brewer(palette = 'Dark2', 'longevity') +
-  scale_fill_brewer(palette = 'Dark2', 'longevity') +
+  scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  scale_fill_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  # scale_colour_brewer(palette = 'Dark2', 'longevity') +
+  # scale_fill_brewer(palette = 'Dark2', 'longevity') +
   scale_linetype(
     'component', 
     labels = c(expression(bar(z)), expression(bar(b)), expression(bar(e)))
@@ -109,7 +111,7 @@ z.bar %>%
     linetype = guide_legend(order = 1, override.aes = list(linewidth = 1))
   ) +
   facet_wrap(~ hert, labeller = labeller(hert = label_parsed)) +
-  theme(panel.background = element_blank())
+  theme(panel.background = element_blank(), legend.position = 'top')
 
 ggsave('analyze_results/figs_out/fig4_pheno_comp_mean.png',
        width = 8, height = 3)
@@ -150,14 +152,14 @@ z.var %>%
     'component', 
     labels = c(expression(gamma^2), expression(gamma[a]^2), expression(gamma[e]^2))
   ) +
-  scale_colour_brewer(palette = 'Dark2', 'longevity') +
-  scale_fill_brewer(palette = 'Dark2', 'longevity') +
+  scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  scale_fill_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  # scale_colour_brewer(palette = 'Dark2', 'longevity') +
+  # scale_fill_brewer(palette = 'Dark2', 'longevity') +  
   labs(x = 'Time step', y = 'Value') +
   guides(linetype = guide_legend(order = 2, override.aes = list(linewidth = 1))) +
   facet_wrap(~ hert, labeller = labeller(hert = label_parsed)) +
-  theme(
-    panel.background = element_blank()
-  )
+  theme(panel.background = element_blank(), legend.position = 'top')
 
 ggsave('analyze_results/figs_out/fig6_pheno_comp_vars.png',
        width = 8, height = 3)
@@ -198,15 +200,15 @@ z.var %>%
     'component', 
     labels = c(expression(gamma^2), expression(gamma[a]^2), expression(gamma[e]^2))
   ) +
-  scale_colour_brewer(palette = 'Dark2', 'longevity') +
-  scale_fill_brewer(palette = 'Dark2', 'longevity') +
+  scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  scale_fill_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  # scale_colour_brewer(palette = 'Dark2', 'longevity') +
+  # scale_fill_brewer(palette = 'Dark2', 'longevity') +
   scale_y_continuous(limits = c(0, 0.75)) +
   labs(x = 'Time step', y = 'Value') +
   guides(linetype = guide_legend(order = 2, override.aes = list(linewidth = 1))) +
   facet_wrap(~ hert, labeller = labeller(hert = label_parsed)) +
-  theme(
-    panel.background = element_blank()
-  )
+  theme(panel.background = element_blank(), legend.position = 'top')
 
 ggsave('analyze_results/figs_out/figS3_pheno_comp_vars_postsel.png',
        width = 8, height = 3)
