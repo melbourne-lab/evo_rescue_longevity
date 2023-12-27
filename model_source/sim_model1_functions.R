@@ -1,4 +1,7 @@
 ##### Source code for main simulation model
+# Also includes code to silence summarise() output
+# and create subdirectories for figures and other output files if they do not
+# already exist
 
 ##### Load packages
 library(dplyr)
@@ -424,3 +427,12 @@ propagate.sim.r.first = function(popn, params, theta) {
   return(popn.out)
   
 }
+
+##### Create output subdirectories if they do not already exist
+
+# Simulation output
+if (!dir.exists('run_sims/out')) dir.create('run_sims/out')
+# Figures for validation
+if (!dir.exists('analytical_validation/validation_figs/')) dir.create('analytical_validation/validation_figs/')
+# Figures for analysis
+if (!dir.exists('analyze_results/figs_out/')) dir.create('analyze_results/figs_out/')
