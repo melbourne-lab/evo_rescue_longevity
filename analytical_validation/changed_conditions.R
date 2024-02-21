@@ -45,7 +45,7 @@ pars = expand.grid(
   # Heritability of fitness
   h2    = .5,
   # Gamma squared (pheno variance / sel pressure)
-  sig.z = sqrt(c(.4, .7, 1))
+  sig.z = sqrt(c(.3, .45, .6))
 ) %>%
   # Demographic rates
   mutate(
@@ -75,7 +75,7 @@ pars = expand.grid(
     sig.0 = sqrt(newt.method.g1(.1, 1e-8, s.max / lstar, r)),
     # Breeding value standard deviation in new cohorts
     sig.a = sqrt(h2 * sig.0^2),
-    # Non-inherited standard dxeviation in new cohorts
+    # Non-inherited standard deviation in new cohorts
     sig.e = sqrt((1-h2) * sig.0^2),
     # Population-wide breeding value standard deviation
     sig.p = sqrt(gamma.a.calc(sig.a^2, s.max / lstar, r, sig.e^2)),
