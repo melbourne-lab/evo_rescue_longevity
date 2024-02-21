@@ -71,7 +71,7 @@ pars = expand.grid(
     sig.0 = sqrt(newt.method.g1(.1, 1e-8, s.max / lstar, r)),
     # Breeding value standard deviation in new cohorts
     sig.a = sqrt(h2 * sig.0^2),
-    # Non-inherited standard dxeviation in new cohorts
+    # Non-inherited standard deviation in new cohorts
     sig.e = sqrt((1-h2) * sig.0^2),
     # Population-wide breeding value standard deviation
     sig.p = sqrt(gamma.a.calc(sig.a^2, s.max / lstar, r, sig.e^2)),
@@ -194,7 +194,8 @@ n.pheno.means = sim.out %>%
 n.pheno.means %>%
   ggplot(aes(x = t, y = n)) +
   geom_line(aes(group = trial, colour = long), linewidth = 0.5) +
-  scale_colour_brewer(palette = 'Dark2', 'longevity') +
+  # scale_colour_brewer(palette = 'Dark2', 'longevity') +
+  scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
   scale_x_continuous(breaks = (0:2)*5) +
   labs(x = 'Time step', y = 'Population size') +
   facet_grid(cols = vars(hert), rows = vars(varn), labeller = label_parsed) +
@@ -220,8 +221,8 @@ sim.sum %>%
     size = 2, shape = 21
   ) +
   geom_line(aes(group = interaction(p0, t), colour = long), linewidth = 0.1) +
-  scale_colour_brewer(palette = 'Dark2', 'longevity') +
-  scale_fill_brewer(palette = 'Dark2', 'longevity') +
+  scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  scale_fill_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
   # scale_colour_manual(values = c('gray77', 'gray44', 'gray11')) +
   # scale_fill_manual(values = c('gray77', 'gray44', 'gray11')) +
   scale_y_log10() +
@@ -250,8 +251,8 @@ sim.sum %>%
     shape = 21, size = 2
   ) +
   geom_line(aes(group = interaction(p0, t), colour = long), linewidth = 0.1) +
-  scale_colour_brewer(palette = 'Dark2', 'longevity') +
-  scale_fill_brewer(palette = 'Dark2', 'longevity') +
+  scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  scale_fill_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
   scale_x_continuous(breaks = (0:3)*3) +
   scale_y_log10() +
   labs(x = 'Age', y = 'Probability of being at age') +
@@ -270,7 +271,7 @@ n.pheno.means %>%
   geom_line(aes(colour = long), linewidth = 0.5) + 
   labs(x = 'Time step', y = expression(Mean ~ breeding ~ value ~ bar(b)[t])) +
   scale_x_continuous(breaks = (0:2)*5) +
-  scale_colour_brewer(palette = 'Dark2', 'longevity') +
+  scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
   facet_grid(
     cols = vars(hert), rows = vars(varn),
     labeller = label_parsed
@@ -289,7 +290,7 @@ n.pheno.means %>%
   geom_line(aes(colour = long), linewidth = 0.5) + 
   labs(x = 'Time step', y = expression(Mean ~ environmental ~ component ~ bar(e)[t])) +
   scale_x_continuous(breaks = (0:2)*5) +
-  scale_colour_brewer(palette = 'Dark2', 'longevity') +
+  scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
   facet_grid(
     cols = vars(hert), rows = vars(varn),
     labeller = label_parsed
@@ -308,7 +309,7 @@ n.pheno.means %>%
   geom_line(aes(colour = long), linewidth = 0.5) + 
   labs(x = 'Time step', y = expression(Mean ~ phenotype ~ bar(z)[t])) +
   scale_x_continuous(breaks = (0:2)*5) +
-  scale_colour_brewer(palette = 'Dark2', 'longevity') +
+  scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
   facet_grid(
     cols = vars(hert), rows = vars(varn),
     labeller = label_parsed
