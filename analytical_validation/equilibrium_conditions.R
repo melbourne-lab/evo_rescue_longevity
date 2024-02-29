@@ -13,7 +13,7 @@
 #   - Age structure - probability of being in each age
 #   - Mean of each phenotypic component (population-level)
 #   - Variance of each phenotypic component (per age)
-# SN - init 11 Dec. 2023
+# - init 11 Dec. 2023
 ##########
 
 # Packages

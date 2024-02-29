@@ -17,7 +17,7 @@
 # - Script contains plots for: 
 #   - Mean of each phenotypic component over time (per cohort)
 #   - Variance of each phenotypic component (per age)
-# SN - init 18 Dec. 2023
+# - init 18 Dec. 2023
 ##########
 
 

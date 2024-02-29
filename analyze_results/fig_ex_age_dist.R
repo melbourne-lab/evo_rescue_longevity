@@ -1,5 +1,5 @@
 # Script for plotting example age distributions (supplemental figure S1 in )
-# SN - 25 May 2023
+# - 25 May 2023
 
 library(ggplot2)
 library(dplyr)

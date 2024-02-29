@@ -1,7 +1,7 @@
 ##########
 # Simulated experiment
 # Here: trying to capture age structure for populations
-# SN - init 6 Mar 2023
+# - init 6 Mar 2023
 ##########
 
 # Packages

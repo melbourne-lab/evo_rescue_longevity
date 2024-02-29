@@ -1,7 +1,7 @@
 ##########
 # Simulated experiment
 # Here: recording population-level phenotypic components
-# SN - init 9 Mar 2023
+# - init 9 Mar 2023
 ##########
 
 # Packages
