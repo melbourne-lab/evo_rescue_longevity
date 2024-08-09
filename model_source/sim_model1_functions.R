@@ -91,8 +91,6 @@ init.sim = function(params, theta0) {
   sig.e = params$sig.e
   # initial genotype
   gbar0 = ifelse(any(grepl('gbar0', names(params))), params$gbar0, 0)
-  # density dependence strength
-  alpha = ifelse(any(grepl('alpha', names(params))), params$alpha, 0)
   # ceiling-like carrying capacity term
   kceil = ifelse(any(grepl('ceil' , names(params))), params$kceil, Inf)
   # equilibrium population growth rate 
@@ -135,7 +133,7 @@ init.sim = function(params, theta0) {
       # Phenotype
       z_i = b_i + e_i,
       # Survival
-      s_i = s.max * exp(-(z_i - theta0)^2 / (2*wfitn^2)) * exp(-alpha * size0),
+      s_i = s.max * exp(-(z_i - theta0)^2 / (2*wfitn^2)),
       # Offspring (0 for males, Poisson draw for females)
       r_i = rpois(size0, lambda = ifelse(fem, 2 * r, 0)),
       # Phenotypic optimum in this time step
@@ -176,8 +174,6 @@ propagate.sim = function(popn, params, theta, cur.i) {
   mu    = ifelse(any(grepl('mu', names(params))), params$mu, 0)
   # standard dev. of mutations
   sig.m = ifelse(any(grepl('sig.m', names(params))), params$sig.m, 0)
-  # Strength of density dependence
-  alpha = ifelse(any(grepl('alpha', names(params))), params$alpha, 0) 
   # ceiling-like carrying capacity term
   kceil = ifelse(any(grepl('ceil' , names(params))), params$kceil, Inf)
   
@@ -188,7 +184,7 @@ propagate.sim = function(popn, params, theta, cur.i) {
   popn.surv = popn %>% 
     # recalculate s_i based on current theta value
     mutate(theta_t = theta) %>%
-    mutate(s_i = s.max * exp(-(z_i - theta_t)^2 / (2*wfitn^2)) * exp(-alpha * nrow(.))) %>%
+    mutate(s_i = s.max * exp(-(z_i - theta_t)^2 / (2*wfitn^2))) %>%
     # simulate survival step using Bernoulli draw for each individual
     filter(as.logical(rbinom(n = nrow(.), size = 1, prob = s_i))) %>%
     # Handle parents - iterating forward age, current time step
@@ -226,7 +222,7 @@ propagate.sim = function(popn, params, theta, cur.i) {
                     rbinom(nrow(.), 1, mu) * rnorm(nrow(.), 0, sig.m),
                                                     # assign breeding value (mean is midparent, sd is sqrt(additive var))
              z_i = rnorm(nrow(.), b_i, sig.e),      # assign phenotype (mean is breding value, sd is sd of env. variance)
-             s_i = s.max * exp(-(z_i - theta)^2 / (2*wfitn^2)) * exp(-alpha * nrow(.)), # determine survival probability
+             s_i = s.max * exp(-(z_i - theta)^2 / (2*wfitn^2)), # determine survival probability
              r_i = rpois(nrow(.), lambda = ifelse(fem, 2 * r, 0)), # re-draw number of offspring per mother
              theta_t = theta) %>%                   # phenotypic optimum in this time step
       select(i, t, age, fem, b_i, z_i, s_i, r_i, theta_t)
@@ -276,8 +272,6 @@ sim = function(params, theta.t, init.rows, init.popn = NULL) {
   sig.e = params$sig.e
   # initial genotype
   gbar0 = ifelse(any(grepl('gbar0', names(params))), params$gbar0, 0)
-  # density dependence strength
-  alpha = ifelse(any(grepl('alpha', names(params))), params$alpha, 0)
   # ceiling-like carrying capacity term
   kceil = ifelse(any(grepl('ceil' , names(params))), params$kceil, Inf)
   
@@ -305,7 +299,7 @@ sim = function(params, theta.t, init.rows, init.popn = NULL) {
   if (!is.null(init.popn)) {
     init.popn = init.popn %>%
       mutate(theta_t = theta.t[1]) %>%
-      mutate(s_i = s.max * exp(-(z_i - theta_t)^2 / (2*wfitn^2)) * exp(-alpha * nrow(.)))
+      mutate(s_i = s.max * exp(-(z_i - theta_t)^2 / (2*wfitn^2)))
   } else {
     init.popn = init.sim(params = params, theta0 = theta.t[1])
   }
@@ -354,8 +348,6 @@ propagate.sim.r.first = function(popn, params, theta) {
   sig.a = params$sig.a
   # standard dev. of environmental phenoytpic noise
   sig.e = params$sig.e
-  # Strength of density dependence
-  alpha = ifelse(any(grepl('alpha', names(params))), params$alpha, 0) 
   
   # Only iterate if there are both male and females available for mating
   if (sum(popn$fem) & sum(!popn$fem)) {
@@ -392,7 +384,7 @@ propagate.sim.r.first = function(popn, params, theta) {
                       as.numeric(rbinom(nrow(.), 1, mu) * rnorm(nrow(.), 0, sig.m)),
                                                       # assign breeding value (mean is midparent, sd is sqrt(additive var))
                z_i = rnorm(nrow(.), b_i, sig.e),      # assign phenotype (mean is breding value, sd is sd of env. variance)
-               s_i = s.max * exp(-(z_i - theta)^2 / (2*wfitn^2)) * exp(-alpha * nrow(.)), # determine survival probability
+               s_i = s.max * exp(-(z_i - theta)^2 / (2*wfitn^2)), # determine survival probability
                r_i = rpois(nrow(.), lambda = ifelse(fem, 2 * r, 0)), # re-draw number of offspring per mother
                theta_t = theta) %>%                   # phenotypic optimum in this time step
         select(i, t, age, fem, b_i, z_i, s_i, r_i, theta_t)
@@ -411,7 +403,7 @@ propagate.sim.r.first = function(popn, params, theta) {
       mutate(r_i = rpois(nrow(.), lambda = ifelse(fem, 2 * r, 0))) %>%
       # recalculate s_i based on current theta value
       mutate(theta_t = theta) %>%
-      mutate(s_i = s.max * exp(-(z_i - theta_t)^2 / (2*wfitn^2)) * exp(-alpha * nrow(.))) %>%
+      mutate(s_i = s.max * exp(-(z_i - theta_t)^2 / (2*wfitn^2))) %>%
       # combine with offspring
       rbind(offspring) %>%
       # simulate survival step using Bernoulli draw for each individual
