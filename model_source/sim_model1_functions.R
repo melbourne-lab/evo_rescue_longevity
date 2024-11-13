@@ -140,16 +140,16 @@ newt.method.2d = function(l.init, g.init, s, r, g2, tol) {
 #   return(r / (r+1) * sumo)
 # }
 # 
-# gamma.a.calc = function(g2a0, s, r, g2e0) {
-#   # function for getting overall population genotypic variance
-#   # (in terms of gamma)
-#   # needed for getting mutation rate (to hold population-level variance constant)
-#   sumo = 0
-#   for (k in 0:1e5) {
-#     sumo = sumo + ((s^k / sqrt(1 + k*(g2a0 + g2e0))) * ((g2a0*(1 + k*g2e0)) / (1 + k*(g2e0 + g2a0))))
-#   }
-#   return(r / (r+1) * sumo)
-# }
+gamma.a.calc = function(g2a0, s, r, g2e0) {
+  # function for getting overall population genotypic variance
+  # (in terms of gamma)
+  # needed for getting mutation rate (to hold population-level variance constant)
+  sumo = 0
+  for (k in 0:1e5) {
+    sumo = sumo + ((s^k / sqrt(1 + k*(g2a0 + g2e0))) * ((g2a0*(1 + k*g2e0)) / (1 + k*(g2e0 + g2a0))))
+  }
+  return(r / (r+1) * sumo)
+}
 
 ### Wrapper for initializing sim
 
