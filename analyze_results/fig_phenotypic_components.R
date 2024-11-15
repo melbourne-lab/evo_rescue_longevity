@@ -7,6 +7,8 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 
+rm(list = ls())
+
 # Load in data
 z.com = read.csv('run_sims/out/sim_results_m1_phtype.csv')
 
@@ -19,7 +21,7 @@ trys.per = 200
 
 # Get means per group
 z.bar = z.com %>%
-  group_by(t, p0, h2) %>%
+  group_by(t, s.max, h2) %>%
   summarise(
     across(
       contains('bar'),
@@ -43,7 +45,7 @@ head(z.bar)
 
 # Get variances per group
 z.var = z.com %>%
-  group_by(t, p0, h2) %>%
+  group_by(t, s.max, h2) %>%
   summarise(
     across(
       contains('var'),
@@ -72,11 +74,14 @@ z.bar %>%
   ungroup() %>%
   # Factor for plotting aesthetics
   mutate(
-    long = factor(p0, labels = c('high', 'medium', 'low')),
+    long = factor(s.max, labels = c('low', 'medium', 'high'), levels = c(0.9, 0.5, 0.1)),
+    # long = relevel(long, ref = 'high'),
     # hert = factor(paste0('heritability ', h2)),
     hert = factor(paste0("h^2 == ", h2)),
     comp = relevel(factor(comp), ref = 'zbar')
   ) %>%
+  # Re-arrange to get the low longevity on top
+  arrange(desc(long)) %>%
   ggplot(aes(x = t)) +
   geom_ribbon(
     aes(
@@ -98,6 +103,8 @@ z.bar %>%
   ) +
   scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
   scale_fill_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  # scale_colour_manual(values = c("#E69F00", "#56B4E9", "#999999"), 'longevity') +
+  # scale_fill_manual(values = c("#E69F00", "#56B4E9", "#999999"), 'longevity') +
   # scale_colour_brewer(palette = 'Dark2', 'longevity') +
   # scale_fill_brewer(palette = 'Dark2', 'longevity') +
   scale_linetype(
@@ -124,7 +131,8 @@ z.var %>%
   ungroup() %>%
   # Factor for plotting aesthetics
   mutate(
-    long = factor(p0, labels = c('high', 'medium', 'low')),
+    long = factor(s.max, labels = c('low', 'medium', 'high'), levels = c(0.9, 0.5, 0.1)),
+    # long = relevel(long, ref = 'high'),
     # hert = factor(paste0('heritability ', h2)),
     hert = factor(paste0("h^2 == ", h2)),
     comp = relevel(factor(comp), ref = 'zvar')
@@ -154,6 +162,8 @@ z.var %>%
   ) +
   scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
   scale_fill_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  # scale_colour_manual(values = c("#E69F00", "#56B4E9", "#999999"), 'longevity') +
+  # scale_fill_manual(values = c("#E69F00", "#56B4E9", "#999999"), 'longevity') +
   # scale_colour_brewer(palette = 'Dark2', 'longevity') +
   # scale_fill_brewer(palette = 'Dark2', 'longevity') +  
   labs(x = 'Time step', y = 'Value') +
@@ -164,52 +174,52 @@ z.var %>%
 ggsave('analyze_results/figs_out/fig6_pheno_comp_vars.png',
        width = 8, height = 3)
 
-# Plot of components after selection
-z.var %>% 
-  # Get only extant populations
-  # get only the 'w' vars - i.e., variance components after selection
-  filter(nn == trys.per, grepl('w', comp)) %>%
-  ungroup() %>%
-  # Factor for plotting aesthetics
-  mutate(
-    long = factor(p0, labels = c('high', 'medium', 'low')),
-    # hert = factor(paste0('heritability ', h2)),
-    hert = factor(paste0("h^2 == ", h2)),
-    comp = relevel(factor(comp), ref = 'zvarw')
-  ) %>%
-  ggplot(aes(x = t)) +
-  geom_ribbon(
-    aes(
-      ymin = bar - 2 * sqrt(var / nn),
-      ymax = bar + 2 * sqrt(var / nn),
-      group = interaction(comp, long),
-      fill = long
-    ),
-    alpha = 0.2
-  ) +
-  geom_line(
-    aes(
-      y = bar,
-      group = interaction(comp, long),
-      colour = long,
-      linetype = comp
-    ),
-    linewidth = 1.1
-  ) +
-  scale_linetype(
-    'component', 
-    labels = c(expression(gamma^2), expression(gamma[a]^2), expression(gamma[e]^2))
-  ) +
-  scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
-  scale_fill_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
-  # scale_colour_brewer(palette = 'Dark2', 'longevity') +
-  # scale_fill_brewer(palette = 'Dark2', 'longevity') +
-  scale_y_continuous(limits = c(0, 0.75)) +
-  labs(x = 'Time step', y = 'Value') +
-  guides(linetype = guide_legend(order = 2, override.aes = list(linewidth = 1))) +
-  facet_wrap(~ hert, labeller = labeller(hert = label_parsed)) +
-  theme(panel.background = element_blank(), legend.position = 'top')
-
-ggsave('analyze_results/figs_out/figS3_pheno_comp_vars_postsel.png',
-       width = 8, height = 3)
+# # Plot of components after selection
+# z.var %>% 
+#   # Get only extant populations
+#   # get only the 'w' vars - i.e., variance components after selection
+#   filter(nn == trys.per, grepl('w', comp)) %>%
+#   ungroup() %>%
+#   # Factor for plotting aesthetics
+#   mutate(
+#     long = factor(p0, labels = c('high', 'medium', 'low')),
+#     # hert = factor(paste0('heritability ', h2)),
+#     hert = factor(paste0("h^2 == ", h2)),
+#     comp = relevel(factor(comp), ref = 'zvarw')
+#   ) %>%
+#   ggplot(aes(x = t)) +
+#   geom_ribbon(
+#     aes(
+#       ymin = bar - 2 * sqrt(var / nn),
+#       ymax = bar + 2 * sqrt(var / nn),
+#       group = interaction(comp, long),
+#       fill = long
+#     ),
+#     alpha = 0.2
+#   ) +
+#   geom_line(
+#     aes(
+#       y = bar,
+#       group = interaction(comp, long),
+#       colour = long,
+#       linetype = comp
+#     ),
+#     linewidth = 1.1
+#   ) +
+#   scale_linetype(
+#     'component', 
+#     labels = c(expression(gamma^2), expression(gamma[a]^2), expression(gamma[e]^2))
+#   ) +
+#   scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+#   scale_fill_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+#   # scale_colour_brewer(palette = 'Dark2', 'longevity') +
+#   # scale_fill_brewer(palette = 'Dark2', 'longevity') +
+#   scale_y_continuous(limits = c(0, 0.75)) +
+#   labs(x = 'Time step', y = 'Value') +
+#   guides(linetype = guide_legend(order = 2, override.aes = list(linewidth = 1))) +
+#   facet_wrap(~ hert, labeller = labeller(hert = label_parsed)) +
+#   theme(panel.background = element_blank(), legend.position = 'top')
+# 
+# ggsave('analyze_results/figs_out/figS3_pheno_comp_vars_postsel.png',
+#        width = 8, height = 3)
 

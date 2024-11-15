@@ -17,7 +17,7 @@ trys.per = 1000
 n.all = read.csv('run_sims/out/sim_results_m1_allsizes_n.csv') %>%
   # Factor for plotting aesthetics
   mutate(
-    long = factor(p0, labels = c('high', 'medium', 'low')),
+    long = factor(s.max, labels = c('low', 'medium', 'high'), levels = c(0.9, 0.5, 0.1)),
     hert = factor(paste0('h^2 == ', h2)),
     varn = factor(paste0('gamma^2 == ', var.z))
   )
@@ -29,7 +29,7 @@ head(n.all)
 n.ind = read.csv('run_sims/out/sim_results_m1_disaggregated_n.csv') %>% 
   # Factor for plotting aesthetics
   mutate(
-    long = factor(p0, labels = c('high', 'medium', 'low')),
+    long = factor(s.max, labels = c('low', 'medium', 'high'), levels = c(0.9, 0.5, 0.1)),
     hert = factor(paste0('h^2 == ', h2)),
     varn = factor(paste0('gamma^2 == ', var.z))
   )
@@ -67,6 +67,8 @@ n.all %>%
   labs(x = 'Time step', y = 'Population size') +
   scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
   scale_fill_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  # scale_colour_manual(values = c("#E69F00", "#56B4E9", "#999999"), 'longevity') +
+  # scale_fill_manual(values = c("#E69F00", "#56B4E9", "#999999"), 'longevity') +
   # scale_colour_brewer(palette = 'Dark2', 'longevity') +
   # scale_fill_brewer(palette = 'Dark2', 'longevity') +
   facet_grid(rows = vars(varn), cols = vars(hert), labeller = label_parsed) +
@@ -84,6 +86,7 @@ n.all %>%
   geom_line(aes(colour = long), linewidth = 1.2) +
   labs(x = 'Time step', y = 'Proportion surviving') +
   scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  # scale_colour_manual(values = c("#E69F00", "#56B4E9", "#999999"), 'longevity')
   # scale_colour_brewer(palette = 'Dark2', 'longevity') +
   facet_grid(rows = vars(varn), cols = vars(hert), labeller = label_parsed) +
   theme(

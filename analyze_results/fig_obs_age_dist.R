@@ -19,9 +19,9 @@ trys.per = 200
 age.dist = v.age %>%
   group_by(trial, t) %>%
   mutate(n.total = sum(n)) %>%
-  group_by(p0, h2, t, age) %>%
+  group_by(s.max, h2, t, age) %>%
   summarise(p.age = sum(n / n.total) / trys.per) %>%
-  group_by(p0, h2, t) %>%
+  group_by(s.max, h2, t) %>%
   mutate(
     p.age1 = cumsum(p.age),
     p.age0 = c(0, p.age1[-n()])
@@ -37,7 +37,7 @@ age.dist = v.age %>%
 age.dist %>%
   mutate(
     # long = longevity
-    long = factor(p0, labels = c('high', 'medium', 'low')),
+    long = factor(s.max, labels = c('low', 'medium', 'high'), levels = c(0.9, 0.5, 0.1)),
     # hert = heritability
     hert = factor(paste("h^2 ==", h2))
   ) %>%
@@ -63,7 +63,7 @@ age.dist %>%
 ### Plot for *only* high longevity
 
 age.dist %>%
-  filter(p0 < 0.5) %>%
+  filter(s.max > 0.5) %>%
   # hert = heritability (for facet labeling)
   mutate(hert = factor(paste("h^2 ==", h2))) %>%
   ggplot(aes(x = t)) +
