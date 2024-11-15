@@ -9,6 +9,7 @@
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(purrr)
 library(parallel)
 
 # Clear namespace
@@ -28,47 +29,63 @@ pars = expand.grid(
   # (Equilibrium) size of initial cohort
   s.max = c(0.1, 0.5, 0.9),
   # Phenotypic variance
-  sig.z = sqrt(c(0.1, 0.25, 0.4)),
-  # Heritability of fitness
-  h2    = c(.25, .5, 1)
+  sig.z = sqrt(c(0.1, 0.25, 0.4))
 ) %>%
-  # Demographic rates
   mutate(
-    # Maximum expected lifetime fitness
+    # Maximum annual growth rate
     l.max = 1.4,
     # Mean fecundity
-    r     = (l.max / s.max) - 1,
-    # Equilibrium population growth rate
-    lstar = l.max / sqrt(1 + sig.z^2),
-    # Initial population size
-    n.pop0 = 20000,
-    # Strength of density dependence
-    # alpha = log(lstar) / n.pop0,
-    # Ceciling-type carrying capacity just in case
-    kceil = 20000, # 30000,
-    p0    = r / (1 + r)
+    r     = (l.max / s.max) - 1
+  )
+
+pars = cbind(
+  pars,
+  pars %>%
+    split(~ s.max + sig.z) %>%
+    map(\(x) newt.method.2d(1.1, .5, x$s.max, x$r, x$sig.z^2, 1e-5)) %>%
+    do.call(rbind, .)
+)
+  
+pars = pars %>%
+  # Rename variables as needed
+  rename(
+    lstar = lam, 
+    sig.0 = g2_0
   ) %>%
-  # Genetic info
-  group_by(lstar, s.max, h2, p0) %>%
+  # Wrapper function above gives the squared phenotypic variance; convert to
+  # standard dev.
+  mutate(sig.0 = sqrt(sig.0)) %>%
+  # Repicate data frame above to include three heritability levels
+  merge(data.frame(h2 = c(0.25, .5, 1.0))) %>%
+  # Estimate genetic variance and environmental component variance in newborn
+  # cohorts
   mutate(
-    # Gamma-parameterization
-    # wfitn = 1 in gamma parameterization
-    wfitn = 1,
-    # Phenotypic standard deviation in new cohorts
-    sig.0 = sqrt(newt.method.g1(.1, 1e-8, s.max / lstar, r)),
-    # Breeding value standard deviation in new cohorts
-    sig.a = sqrt(h2 * sig.0^2),
-    # Non-inherited standard dxeviation in new cohorts
-    sig.e = sqrt((1-h2) * sig.0^2),
-    # Population-wide breeding value standard deviation
-    sig.p = sqrt(gamma.a.calc(sig.a^2, s.max / lstar, r, sig.e^2)),
-    mu    = 1,
-    sig.m = sqrt(wfitn^2 * (sig.a^2 - (sig.p^2 - p0*sig.a^2)/(1-p0))),
-    gbar0 = 2
+    sig.a = sqrt(h2 * sig.0^2), 
+    sig.e = sqrt((1 - h2) * sig.0^2)
   ) %>%
-  ungroup() %>%
-  # Other junk
-  mutate(timesteps = 100)
+  # Add other necessary parameters as needed
+  mutate(
+    # Length of simulations
+    timesteps = 100,
+    # Initial pouplation size
+    n.pop0 = 20000,
+    # Ceiling-type carrying capacity
+    kceil = 20000,
+    # Initial population distance from phenotypic optimum (i.e., magnitude of
+    # environmental shift)
+    gbar0 = 2,
+    # Width of fitness landscape
+    # (setting this to 1 makes the simulation follow the gamma-parameterization
+    # in manuscript)
+    wfitn = 1,
+    # Per-individual mutation rate
+    mu    = 1,
+    # Population-wide additive genetic variance (needed to get mutational
+    # variance)
+    sig.p = sqrt(gamma.a.calc(sig.a^2, s.max / lstar, r, sig.e^2)),
+    # Mutational variance
+    sig.m = sqrt(wfitn^2 * (sig.a^2 - sig.p^2) * (1 + r)),
+  )
 
 # Run simulations
 set.seed(233024)
@@ -81,7 +98,7 @@ sim.out = mclapply(
       summarise(n = n())  %>%
       mutate(
         trial = pars$try.no, 
-        p0    = pars$p0,
+        s.max = pars$s.max,
         h2    = pars$h2,
         var.z = pars$sig.z^2
       )
@@ -94,7 +111,7 @@ sim.r = sim.out %>%
   group_by(trial) %>%
   mutate(log.lam = c(diff(log(n)), NA)) %>%
   filter(!is.na(log.lam)) %>%
-  group_by(t, p0, var.z, h2) %>%
+  group_by(t, s.max, var.z, h2) %>%
   summarise(
     llbar = mean(log.lam),
     llvar = var(log.lam),
@@ -114,13 +131,13 @@ sim.n.all = sim.out %>%
   group_by(trial) %>%
   arrange(t) %>%
   mutate(
-    p0 =    p0[1],
-    h2 =    h2[1],
+    s.max = s.max[1],
+    h2    = h2[1],
     var.z = var.z[1]
   ) %>%
-  group_by(p0, var.z, h2, t, trial) %>%
+  group_by(s.max, var.z, h2, t, trial) %>%
   summarise(n = sum(n)) %>%
-  group_by(p0, var.z, h2, t) %>%
+  group_by(s.max, var.z, h2, t) %>%
   summarise(
     nbar = mean(n),
     nvar = var(n),
@@ -128,15 +145,15 @@ sim.n.all = sim.out %>%
     nn   = n()
   )
 
-sim.n.surv = sim.out %>%
-  group_by(trial) %>%
-  filter(max(t) == pars$timesteps[1]) %>%
-  group_by(h2, var.z, p0, t) %>%
-  summarise(
-    nbar = mean(n),
-    nvar = var(n),
-    nn   = n()
-  )
+# sim.n.surv = sim.out %>%
+#   group_by(trial) %>%
+#   filter(max(t) == pars$timesteps[1]) %>%
+#   group_by(h2, var.z, s.max, t) %>%
+#   summarise(
+#     nbar = mean(n),
+#     nvar = var(n),
+#     nn   = n()
+#   )
 
 # Get 20 trials per parameter combination
 sim.disagg = sim.out %>% filter((trial %% trys.per) < 20)
@@ -153,11 +170,11 @@ write.csv(
   file = 'run_sims/out/equal_lambda/sim_results_m1_allsizes_n.csv'
 )
 
-write.csv(
-  sim.n.surv,
-  row.names = FALSE,
-  file = 'run_sims/out/equal_lambda/sim_results_m1_survsizes_n.csv'
-)
+# write.csv(
+#   sim.n.surv,
+#   row.names = FALSE,
+#   file = 'run_sims/out/equal_lambda/sim_results_m1_survsizes_n.csv'
+# )
 
 write.csv(
   sim.disagg,
