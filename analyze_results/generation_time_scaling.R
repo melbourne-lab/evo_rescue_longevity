@@ -4,59 +4,127 @@
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(purrr)
 
 rm(list = ls())
 
 # Read in source model functions just in case
 source('model_source/sim_model1_functions.R')
 
-pars = expand.grid(
-  # (Equilibrium) size of initial cohort
-  s.max = c(0.1, 0.5, 0.9),
-  # Heritability of fitness
-  h2    = c(.25, .5, 1)
+pars = data.frame(
+  # Longevity groups defined by s.max
+  s.max = c(0.1, 0.5, 0.9)
 ) %>%
-  # Demographic rates
   mutate(
-    # Maximum expected lifetime fitness
+    # Max lifetime fitness
     w.max = 3,
-    # Gamma squared (pheno variance / sel pressure)
-    sig.z = sqrt(.4),
-    # Equilibrium lifetime fitness
-    wstar = w.max * (1 - s.max) / (sqrt(1 + sig.z^2) - s.max),
-    # Mean fecundity
-    r     = w.max * (1 - s.max) / s.max,
-    # Equilibrium population growth rate
-    lstar = (s.max + w.max * (1 - s.max)) / (s.max + (w.max/wstar) * (1 - s.max)),
-    # Initial population size
-    n.pop0 = 20000,
-    # Strength of density dependence
-    alpha = log(lstar) / n.pop0,
-    # Ceciling-type carrying capacity just in case
-    kceil = 30000,
-    p0    = (w.max * (1 - s.max)) / (w.max * (1 - s.max) + s.max)
+    # Genetic fitness groups defined by 
+    sig.z = sqrt(0.4),
+    # Fecundity per time step
+    r = w.max * (1 - s.max) / s.max
+  ) 
+
+# Estimate lambda* and gamma^2_0 (equilibrium pop growth rate and phenotypic
+# variance in newborn cohorts, respectively)
+# This is done numerically with a method for Newton's method
+pars = cbind(
+  pars,
+  pars %>%
+    split(~ s.max + sig.z) %>%
+    map(\(x) newt.method.2d(1.1, .5, x$s.max, x$r, x$sig.z^2, 1e-5)) %>%
+    do.call(rbind, .)
+)
+
+# Add remaining parameters
+pars = pars %>%
+  # Rename variables as needed
+  rename(
+    lstar = lam, 
+    sig.0 = g2_0
   ) %>%
-  # Genetic info
-  group_by(lstar, s.max, h2, p0) %>%
+  # Wrapper function above gives the squared phenotypic variance; convert to
+  # standard dev.
+  mutate(sig.0 = sqrt(sig.0)) %>%
+  # Repicate data frame above to include three heritability levels
+  merge(data.frame(h2 = c(0.25, .5, 1.0))) %>%
+  # Estimate genetic variance and environmental component variance in newborn
+  # cohorts
   mutate(
-    # Gamma-parameterization
-    # wfitn = 1 in gamma parameterization
-    wfitn = 1,
-    # Phenotypic standard deviation in new cohorts
-    sig.0 = sqrt(newt.method.g1(.1, 1e-8, s.max / lstar, r)),
-    # Breeding value standard deviation in new cohorts
-    sig.a = sqrt(h2 * sig.0^2),
-    # Non-inherited standard dxeviation in new cohorts
-    sig.e = sqrt((1-h2) * sig.0^2),
-    # Population-wide breeding value standard deviation
-    sig.p = sqrt(gamma.a.calc(sig.a^2, s.max / lstar, r, sig.e^2)),
-    mu    = 1,
-    sig.m = sqrt(wfitn^2 * (sig.a^2 - (sig.p^2 - p0*sig.a^2)/(1-p0))),
-    gbar0 = 2
+    sig.a = sqrt(h2 * sig.0^2), 
+    sig.e = sqrt((1 - h2) * sig.0^2)
   ) %>%
-  ungroup() %>%
-  # Other junk
-  mutate(timesteps = 50)
+  # Add other necessary parameters as needed
+  mutate(
+    # Length of simulations
+    timesteps = 100,
+    # Initial pouplation size
+    n.pop0 = 20000,
+    # Ceiling-type carrying capacity
+    kceil = 20000,
+    # Initial population distance from phenotypic optimum (i.e., magnitude of
+    # environmental shift)
+    gbar0 = 2,
+    # Width of fitness landscape
+    # (setting this to 1 makes the simulation follow the gamma-parameterization
+    # in manuscript)
+    wfitn = 1,
+    # Per-individual mutation rate
+    mu    = 1,
+    # Population-wide additive genetic variance (needed to get mutational
+    # variance)
+    sig.p = sqrt(gamma.a.calc(sig.a^2, s.max / lstar, r, sig.e^2)),
+    # Mutational variance
+    sig.m = sqrt(wfitn^2 * (sig.a^2 - sig.p^2) * (1 + r)),
+  )
+
+# Old pars setup below:
+# pars = expand.grid(
+#   # (Equilibrium) size of initial cohort
+#   s.max = c(0.1, 0.5, 0.9),
+#   # Heritability of fitness
+#   h2    = c(.25, .5, 1)
+# ) %>%
+#   # Demographic rates
+#   mutate(
+#     # Maximum expected lifetime fitness
+#     w.max = 3,
+#     # Gamma squared (pheno variance / sel pressure)
+#     sig.z = sqrt(.4),
+#     # Equilibrium lifetime fitness
+#     wstar = w.max * (1 - s.max) / (sqrt(1 + sig.z^2) - s.max),
+#     # Mean fecundity
+#     r     = w.max * (1 - s.max) / s.max,
+#     # Equilibrium population growth rate
+#     lstar = (s.max + w.max * (1 - s.max)) / (s.max + (w.max/wstar) * (1 - s.max)),
+#     # Initial population size
+#     n.pop0 = 20000,
+#     # Strength of density dependence
+#     alpha = log(lstar) / n.pop0,
+#     # Ceciling-type carrying capacity just in case
+#     kceil = 20000,
+#     p0    = (w.max * (1 - s.max)) / (w.max * (1 - s.max) + s.max)
+#   ) %>%
+#   # Genetic info
+#   group_by(lstar, s.max, h2, p0) %>%
+#   mutate(
+#     # Gamma-parameterization
+#     # wfitn = 1 in gamma parameterization
+#     wfitn = 1,
+#     # Phenotypic standard deviation in new cohorts
+#     sig.0 = sqrt(newt.method.g1(.1, 1e-8, s.max / lstar, r)),
+#     # Breeding value standard deviation in new cohorts
+#     sig.a = sqrt(h2 * sig.0^2),
+#     # Non-inherited standard dxeviation in new cohorts
+#     sig.e = sqrt((1-h2) * sig.0^2),
+#     # Population-wide breeding value standard deviation
+#     sig.p = sqrt(gamma.a.calc(sig.a^2, s.max / lstar, r, sig.e^2)),
+#     mu    = 1,
+#     sig.m = sqrt(wfitn^2 * (sig.a^2 - (sig.p^2 - p0*sig.a^2)/(1-p0))),
+#     gbar0 = 2
+#   ) %>%
+#   ungroup() %>%
+#   # Other junk
+#   mutate(timesteps = 50)
 
 # Generatio time is:
 # T = log(R_0) / R
@@ -115,7 +183,7 @@ trys.per = 200
 
 # Get means per group
 z.bar = z.com %>%
-  group_by(t, p0, h2) %>%
+  group_by(t, s.max, h2) %>%
   summarise(
     across(
       contains('bar'),
@@ -136,8 +204,8 @@ z.bar = z.com %>%
   )
 
 gen.adjusted.z.bar = merge(
-  x = z.bar %>% mutate(p0 = round(p0, 2)),
-  y = gen.ts %>% mutate(p0 = round(r/(1+r), 2)) %>% select(-c(s.max, r, lstar, sig.0)),
+  x = z.bar,
+  y = gen.ts %>% select(-c(r, lstar, sig.0)),
 ) %>%
   mutate(gen = t / Tgap)
 
@@ -148,7 +216,7 @@ gen.adjusted.z.bar %>%
   ungroup() %>%
   # Factor for plotting aesthetics
   mutate(
-    long = factor(p0, labels = c('high', 'medium', 'low')),
+    long = factor(s.max, labels = c('low', 'medium', 'high'), levels = c(0.9, 0.5, 0.1)),
     # hert = factor(paste0('heritability ', h2)),
     hert = factor(paste0("h^2 == ", h2)),
     comp = relevel(factor(comp), ref = 'zbar')
@@ -187,7 +255,8 @@ gen.adjusted.z.bar %>%
   # ) +
   scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
   scale_fill_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
-  # scale_colour_brewer(palette = 'Dark2', 'longevity') +
+  # scale_colour_manual(values = c("#E69F00", "#56B4E9", "#999999"), 'longevity') +
+  # scale_fill_manual(values = c("#E69F00", "#56B4E9", "#999999"), 'longevity') +  # scale_colour_brewer(palette = 'Dark2', 'longevity') +
   # scale_fill_brewer(palette = 'Dark2', 'longevity') +
   scale_linetype(
     'component', 
