@@ -74,7 +74,7 @@ z.bar %>%
   ungroup() %>%
   # Factor for plotting aesthetics
   mutate(
-    long = factor(s.max, labels = c('low', 'medium', 'high'), levels = c(0.9, 0.5, 0.1)),
+    long = factor(s.max, labels = c('high', 'medium', 'low'), levels = c(0.9, 0.5, 0.1)),
     # long = relevel(long, ref = 'high'),
     # hert = factor(paste0('heritability ', h2)),
     hert = factor(paste0("h^2 == ", h2)),
@@ -131,7 +131,7 @@ z.var %>%
   ungroup() %>%
   # Factor for plotting aesthetics
   mutate(
-    long = factor(s.max, labels = c('low', 'medium', 'high'), levels = c(0.9, 0.5, 0.1)),
+    long = factor(s.max, labels = c('high', 'medium', 'low'), levels = c(0.9, 0.5, 0.1)),
     # long = relevel(long, ref = 'high'),
     # hert = factor(paste0('heritability ', h2)),
     hert = factor(paste0("h^2 == ", h2)),
