@@ -453,9 +453,6 @@ ggsave('analytical_validation/validation_figs/fig_v17_rhok_change.png',
 # locale:
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 # 
-# time zone: America/Los_Angeles
-# tzcode source: internal
-# 
 # attached base packages:
 # [1] parallel  stats     graphics  grDevices utils     datasets  methods   base     
 # 

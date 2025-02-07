@@ -174,15 +174,14 @@ write.csv(
   row.names = FALSE
 )
 
-### Session Info (15 Nov. 2023)
+### SesssionInfo (14 Nov 2024 - final run)
 
-# R version 4.1.2 (2021-11-01)
-# Platform: x86_64-pc-linux-gnu (64-bit)
+# R version 4.4.1 (2024-06-14)
+# Platform: x86_64-conda-linux-gnu
 # Running under: Ubuntu 18.04.6 LTS
 # 
 # Matrix products: default
-# BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
-# LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+# BLAS/LAPACK: /home/XXX/miniconda3/envs/r-evo_rescue/lib/libopenblasp-r0.3.27.so;  LAPACK version 3.12.0
 # 
 # locale:
 # [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
@@ -197,12 +196,15 @@ write.csv(
 # [8] base     
 # 
 # other attached packages:
-# [1] ggplot2_3.4.0 tidyr_1.1.3   dplyr_1.0.7  
+# [1] mc2d_0.2.1    mvtnorm_1.2-5 purrr_1.0.2   tidyr_1.3.1   dplyr_1.1.4  
+# [6] ggplot2_3.5.1
 # 
 # loaded via a namespace (and not attached):
-# [1] fansi_0.5.0      withr_2.5.0      utf8_1.2.2       crayon_1.4.1    
-# [5] grid_4.1.2       R6_2.5.0         gtable_0.3.0     lifecycle_1.0.3 
-# [9] magrittr_2.0.1   scales_1.2.1     pillar_1.6.2     rlang_1.0.6     
-# [13] cli_3.6.0        vctrs_0.5.2      generics_0.1.0   ellipsis_0.3.2  
-# [17] glue_1.4.2       munsell_0.5.0    purrr_0.3.4      compiler_4.1.2  
-# [21] colorspace_2.0-2 pkgconfig_2.0.3  tidyselect_1.1.1 tibble_3.1.3
+# [1] vctrs_0.6.5      cli_3.6.3        rlang_1.1.4      car_3.1-2       
+# [5] generics_0.1.3   ggpubr_0.6.0     glue_1.7.0       backports_1.5.0 
+# [9] colorspace_2.1-1 scales_1.3.0     fansi_1.0.6      grid_4.4.1      
+# [13] abind_1.4-5      carData_3.0-5    rstatix_0.7.2    munsell_0.5.1   
+# [17] tibble_3.2.1     lifecycle_1.0.4  ggsignif_0.6.4   compiler_4.4.1  
+# [21] pkgconfig_2.0.3  R6_2.5.1         tidyselect_1.2.1 utf8_1.2.4      
+# [25] pillar_1.9.0     magrittr_2.0.3   withr_3.0.1      gtable_0.3.5    
+# [29] broom_1.0.6   
