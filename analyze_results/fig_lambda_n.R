@@ -7,60 +7,73 @@
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(purrr)
 library(cowplot)
 
 rm(list = ls())
 
+# Load in aux functions
+source('model_source/sim_model1_functions.R')
+
+lambdas = data.frame(s.max = c(.1, .5, .9)) %>%
+  mutate(
+    w.max = 3,
+    r = w.max * (1 - s.max) / s.max,
+    gamma = sqrt(0.1)
+  )
+
+lambdas = cbind(
+  lambdas,
+  lambdas %>%
+    split(~ s.max) %>%
+    map(\(x) newt.method.2d(1, .25, x$s.max, x$r, x$gamma^2, 1e-6)) %>%
+    do.call(rbind, .)
+) %>%
+  rename(
+    lstar = lam,
+    sig.z = g2_0
+  ) %>%
+  mutate(sig.z = sqrt(sig.z))
+
 # Plot for panel (a),
 
-lambda.z = expand.grid(
-  # Three different phenotypic standard deviation values
-  gamma = sqrt(c(.1, .25, .4)),
-  # Three different maximum survivals (defining life histories)
-  s.max = c(.1, .5, .9)
-) %>%
+lambda.z = lambdas %>%
+  merge(y = expand.grid(k = 0:500, z = (0:300)/100)) %>%
   mutate(
-    # Get equilibrium population growth rates, lambda^*
-    w.max = 3,
-    l.max = s.max + (1 - s.max) * w.max,
-    lstar = l.max / sqrt(1 + gamma^2)
+    pk = (r / (1+r)) * (s.max / lstar)^k * 1 / sqrt(1 + k*sig.z^2),
+    sbark = s.max * sqrt((1 + k*sig.z^2) / (1 + (k+1)*sig.z^2)) * exp(-z^2 / 2)
   ) %>%
-  # Get the lambda values as a function of z
-  merge(
-    y = expand.grid(
-      lstar = .$lstar, #  %>% pull(lstar),
-      z     = (0:300)/100
-    ) %>%
-      mutate(lamdz = exp(-z^2 / 2) * lstar)
-  ) %>%
-  # Some labels for plotting and faceting
-  mutate(var.z = factor(round(gamma^2, 2)))
+  group_by(s.max, r, z, sig.z, lstar) %>%
+  summarise(lambz = sum(pk * sbark * (1 + r))) %>%
+  ungroup()
 
 lambda.plot = lambda.z %>%
-  mutate(s.max = factor(s.max, levels = c(.9, .5, .1))) %>%
-  ggplot(aes(x = z, y = lamdz, group = interaction(s.max, gamma))) +
+  # mutate(s.max = factor(s.max, levels = c(.9, .5, .1))) %>%
+  mutate(long = factor(s.max, labels = c('high', 'medium', 'low'), levels = c(0.9, 0.5, 0.1))) %>%
+  ggplot(aes(x = z, y = lambz, group = long)) +
   geom_segment(
     aes(x = 0, xend = 3, y = 1, yend = 1),
     linetype = 5, colour = 'gray88'
   ) +
-  geom_line(aes(colour = s.max, linetype = var.z)) +
+  # geom_line(aes(colour = s.max)) +
+  geom_line(aes(colour = long)) +
   # x-axis ticks are z-tilde
-  geom_rug(
-    data = lambda.z %>%
-      distinct(gamma, s.max, w.max, var.z) %>%
-      mutate(ztilde = sqrt(2 * log(w.max * (1-s.max) + s.max) - log(1 + gamma^2))) %>%
-      mutate(s.max = factor(s.max, levels = c(.9, .5, .1))),
-    inherit.aes = FALSE,
-    aes(x = ztilde, colour = s.max, linetype = var.z),
-    sides = 'b', length = grid::unit(0.075, 'npc')
-  ) +
+  # geom_rug(
+  #   data = lambda.z %>%
+  #     distinct(gamma, s.max, w.max, var.z) %>%
+  #     mutate(ztilde = sqrt(2 * log(w.max * (1-s.max) + s.max) - log(1 + gamma^2))) %>%
+  #     mutate(s.max = factor(s.max, levels = c(.9, .5, .1))),
+  #   inherit.aes = FALSE,
+  #   aes(x = ztilde, colour = s.max, linetype = var.z),
+  #   sides = 'b', length = grid::unit(0.075, 'npc')
+  # ) +
   labs(
     x = expression(paste('Mean population phenotype ', bar(z))),
     y = expression(lambda)
   ) +
   scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
   # scale_colour_brewer(palette = 'Dark2', 'longevity') +
-  scale_linetype_manual(values = c(1, 5, 2)) +
+  # scale_linetype_manual(values = c(1, 5, 2)) +
   theme(
     panel.background = element_blank(),
     legend.position = 'none'
@@ -78,14 +91,13 @@ g.and.h = expand.grid(
   # Time steps (x-axis)
   tstep = 0:30
 ) %>%
+  # Get lambda* and gamma^2
+  merge(lambdas) %>%
   mutate(
     n0 = log(20000),
-    w.max = 3,
-    l.max = s.max + w.max * (1 - s.max),
-    gamma = sqrt(.1),
     k  = (1 + .5*gamma^2) / (1 + gamma^2),
     nt = n0 + 
-      tstep * (log(l.max) - .5 * log(1 + gamma^2)) -
+      tstep * (log(lstar)) -
       (2^2 / (2 * (1 + gamma^2))) * (1 - k^(2*tstep)) / (1 - k^2)
   )
 
@@ -106,14 +118,12 @@ n.plot = g.and.h %>%
 n.plot
 # (ignore the warnings - they are just about points getting chopped from the plot)
 
-fig.hypo.legend = get_legend(
+fig.hypo.legend = get_plot_component(
   lambda.plot +
-    guides(
-      linetype = guide_legend(expression(gamma^2)),
-      colour   = guide_legend(expression(hat(s)))
-    ) +
-    theme(legend.position = 'top', legend.key = element_rect(fill = NA))
-)
+    guides(colour = guide_legend(linetype = 'none')) +
+    theme(legend.position = 'top'),
+  'guide-box', return_all = TRUE
+)[[4]]
 
 plot_grid(
   fig.hypo.legend,

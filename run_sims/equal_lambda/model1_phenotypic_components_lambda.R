@@ -22,22 +22,19 @@ source('model_source/sim_model1_functions.R')
 # Trials per parameter combo
 trys.per = 200
 
-pars = data.frame(
-  # Longevity groups defined by s.max
+pars = expand.grid(
+  # (Equilibrium) size of initial cohort
   s.max = c(0.1, 0.5, 0.9)
 ) %>%
   mutate(
-    # Max lifetime fitness
-    w.max = 3,
-    # Population-wide phenotypic variance (one level here)
+    # Maximum annual growth rate
+    l.max = 1.4,
+    # Phenotypic variance
     sig.z = sqrt(0.4),
-    # Fecundity per time step
-    r = w.max * (1 - s.max) / s.max
-  ) 
+    # Mean fecundity
+    r     = (l.max / s.max) - 1
+  )
 
-# Estimate lambda* and gamma^2_0 (equilibrium pop growth rate and phenotypic
-# variance in newborn cohorts, respectively)
-# This is done numerically with a method for Newton's method
 pars = cbind(
   pars,
   pars %>%
@@ -46,7 +43,6 @@ pars = cbind(
     do.call(rbind, .)
 )
 
-# Add remaining parameters
 pars = pars %>%
   # Rename variables as needed
   rename(
@@ -88,66 +84,17 @@ pars = pars %>%
     sig.m = sqrt(wfitn^2 * (sig.a^2 - sig.p^2) * (1 + r)),
   )
 
-# # Parameters
-# pars = expand.grid(
-#   # (Equilibrium) size of initial cohort
-#   s.max = c(0.1, 0.5, 0.9),
-#   # Heritability of fitness
-#   h2    = c(.25, .5, 1)
-# ) %>%
-#   # Demographic rates
-#   mutate(
-#     # Maximum expected lifetime fitness
-#     w.max = 3,
-#     # Gamma squared (pheno variance / sel pressure)
-#     sig.z = sqrt(.4),
-#     # Equilibrium lifetime fitness
-#     wstar = w.max * (1 - s.max) / (sqrt(1 + sig.z^2) - s.max),
-#     # Mean fecundity
-#     r     = w.max * (1 - s.max) / s.max,
-#     # Equilibrium population growth rate
-#     lstar = (s.max + w.max * (1 - s.max)) / (s.max + (w.max/wstar) * (1 - s.max)),
-#     # Initial population size
-#     n.pop0 = 20000,
-#     # Strength of density dependence
-#     alpha = log(lstar) / n.pop0,
-#     # Ceciling-type carrying capacity just in case
-#     kceil = 30000,
-#     p0    = (w.max * (1 - s.max)) / (w.max * (1 - s.max) + s.max)
-#   ) %>%
-#   # Genetic info
-#   group_by(lstar, s.max, h2, p0) %>%
-#   mutate(
-#     # Gamma-parameterization
-#     # wfitn = 1 in gamma parameterization
-#     wfitn = 1,
-#     # Phenotypic standard deviation in new cohorts
-#     sig.0 = sqrt(newt.method.g1(.1, 1e-8, s.max / lstar, r)),
-#     # Breeding value standard deviation in new cohorts
-#     sig.a = sqrt(h2 * sig.0^2),
-#     # Non-inherited standard dxeviation in new cohorts
-#     sig.e = sqrt((1-h2) * sig.0^2),
-#     # Population-wide breeding value standard deviation
-#     sig.p = sqrt(gamma.a.calc(sig.a^2, s.max / lstar, r, sig.e^2)),
-#     mu    = 1,
-#     sig.m = sqrt(wfitn^2 * (sig.a^2 - (sig.p^2 - p0*sig.a^2)/(1-p0))),
-#     gbar0 = 2
-#   ) %>%
-#   ungroup() %>%
-#   # Other junk
-#   mutate(timesteps = 50)
-
 # Run simulations
-set.seed(4523)
+set.seed(233024)
 
 sim.out2 = mclapply(
   pars %>% uncount(trys.per) %>% mutate(try.no = 1:(nrow(.))) %>% split(.$try.no),
   function(pars) {
-    sim(pars, theta.t = 0, init.rows = 50 * 30000) %>%
+    sim(pars, theta.t = 0, init.rows = 50 * 20000) %>%
       mutate(
         e_i = z_i - b_i
       ) %>%
-      group_by(t, age) %>%
+      group_by(t) %>%
       summarise(
         n = n(),
         r = sum(r_i),
@@ -161,6 +108,7 @@ sim.out2 = mclapply(
       mutate(
         trial = pars$try.no, 
         s.max = pars$s.max,
+        lstar = pars$lstar,
         h2    = pars$h2
       )
   },
@@ -170,7 +118,7 @@ sim.out2 = mclapply(
 
 write.csv(
   sim.out2,
-  file = 'run_sims/out/sim_results_m1_ages.csv',
+  file = 'run_sims/out/equal_lambda/sim_results_m1_phenotypic_components.csv',
   row.names = FALSE
 )
 

@@ -28,40 +28,118 @@ dim.add = function(df, rows, addition) {
   return(df)
 }
 
-### Functions for getting gamma^2_0 for a given s, r
-# that define the stage distribution
-
-g1.fun = function(g2_0, s, r) {
-  # g2_0 is gamma^2_0 = sigma^2_0 / w^2
-  # s and r are max survival and fecundity
-  sumo = 0
-  for (k in 0:1e5) sumo = sumo + (s^k / sqrt(1 + k*g2_0))
-  return((r / (r+1)) * sumo - 1)
+### Wrapper function for calculating distributions and partial derivatives
+# used in estimating lambda* (lstar) and gamma^2_0 (sig.z^2) given s, r, gamma^2
+g.calc.all = function(lam, g2_0, s, r, g2) {
+  # Inputs:
+  # lam  = lambda* (lstar) to estimate witn
+  # g2_0 = gamma^2_0 (sig.z) to estimate with
+  # s, r, g2 are specified s, r, gamma^2 values to estimate with
+  
+  # Initialize sums
+  # g1 and g2 are error functions:
+  # g1 is age distribution:
+  #   g1 = sum_k p_k - 1
+  # g2 is phenotypic variance:
+  #   g2 = sum_k (p_k * gamma^2_0 / (1 + k*gamma^2_0)) - gamma^2
+  sum.g1 = 0
+  sum.g2 = 0
+  # Partial derivatives of above functions wrt lambda, gamma^2 resp.
+  sum.dg1.lam = 0
+  sum.dg1.g20 = 0
+  sum.dg2.lam = 0
+  sum.dg2.g20 = 0
+  
+  # Sum over ages
+  for (k in 0:1e5) {
+    
+    # store a value for p_k term in age distribution
+    pk = (r / (1 + r)) * (s / lam)^k  / sqrt(1 + k*g2_0)
+    
+    # g1 (age distribution) terms
+    sum.g1 = sum.g1 + pk
+    sum.dg1.lam = sum.dg1.lam + (pk * (-k / lam))
+    sum.dg1.g20 = sum.dg1.g20 + (pk * (k / (2 * (1 + k*g2_0))))
+    
+    # g2 (phenotypic variance) terms
+    sum.g2 = sum.g2 + pk * (g2_0 / (1 + k*g2_0))
+    sum.dg2.lam = sum.dg2.lam + (pk * (g2_0 / (1 + k*g2_0)) * (-k / lam))
+    sum.dg2.g20 = sum.dg2.g20 + (pk * (1 + (5/2) * g2_0) / (1 + k*g2_0)^2)
+    
+  }
+  
+  return(
+    list(
+      # x are the parameter values *input* to estimate these quantities
+      x = c(lam = lam, g2_0 = g2_0),
+      # error functions (note subtracted terms!)
+      g = c(g1 = sum.g1 - 1, g2 = sum.g2 - g2),
+      # Jacobian matrix
+      j = matrix(
+        c(dg1.lam = sum.dg1.lam, dg1.g20 = sum.dg1.g20,
+          dg2.lam = sum.dg2.lam, dg2.g20 = sum.dg2.g20),
+        byrow = TRUE, nrow = 2
+      )
+    )
+  )
 }
 
-g1.prm = function(g2_0, s, r) {
-  # derivative of g1 with respect go gamma^2_0
-  # (note: not with respect to gamma)
-  sumo = 0
-  for (k in 0:1e5) sumo = sumo - (s^k * (k/2) / sqrt(1 + k*g2_0)^3)
-  return(r / (r+1) * sumo)
+### Newton's method function to solve numerically for lambda star, gamma^2_0
+newt.method.2d = function(l.init, g.init, s, r, g2, tol) {
+  # l.init, g.init are initial values for solver
+  # s, r, g2 are fixed values
+  # tol is tolerance for routine
+  
+  # Initialize all values
+  cur.iter = g.calc.all(l.init, g.init, s, r, g2)
+  
+  while (any(abs(cur.iter$g) > tol)) {
+    # Refit while any of the error functions are larger than the tolerance
+    cur.x = with(cur.iter, x - (solve(j) %*% g))
+    cur.iter = g.calc.all(cur.x[1], cur.x[2], s, r, g2)
+  }
+  
+  # Return *just the very final set of values*
+  return(cur.iter$x)
+  
 }
 
-newt.method.g1 = function(x0, tol, s, r) {
-  # Wrapper for Newton's method
-  xold = x0
-  while (abs(g1.fun(xold, s, r)) > tol) xold = xold - (g1.fun(xold, s, r) / g1.prm(xold, s, r))
-  return(xold)
-}
-
-gamma.calc = function(g2_0, s, r) {
-  # function for getting overall population phenotypic variance
-  # (in terms of gamma)
-  sumo = 0
-  for (k in 0:1e5) sumo = sumo + ((s^k / sqrt(1 + k*g2_0)) * (g2_0 / (1 + k*g2_0)))
-  return(r / (r+1) * sumo)
-}
-
+# ### OLD
+# ###
+# ### Functions for getting gamma^2_0 for a given s, r
+# # that define the stage distribution
+# 
+# g1.fun = function(g2_0, s, r) {
+#   # g2_0 is gamma^2_0 = sigma^2_0 / w^2
+#   # s and r are max survival and fecundity
+#   sumo = 0
+#   for (k in 0:1e5) sumo = sumo + (s^k / sqrt(1 + k*g2_0))
+#   return((r / (r+1)) * sumo - 1)
+# }
+# 
+# g1.prm = function(g2_0, s, r) {
+#   # derivative of g1 with respect go gamma^2_0
+#   # (note: not with respect to gamma)
+#   sumo = 0
+#   for (k in 0:1e5) sumo = sumo - (s^k * (k/2) / sqrt(1 + k*g2_0)^3)
+#   return(r / (r+1) * sumo)
+# }
+# 
+# newt.method.g1 = function(x0, tol, s, r) {
+#   # Wrapper for Newton's method
+#   xold = x0
+#   while (abs(g1.fun(xold, s, r)) > tol) xold = xold - (g1.fun(xold, s, r) / g1.prm(xold, s, r))
+#   return(xold)
+# }
+# 
+# gamma.calc = function(g2_0, s, r) {
+#   # function for getting overall population phenotypic variance
+#   # (in terms of gamma)
+#   sumo = 0
+#   for (k in 0:1e5) sumo = sumo + ((s^k / sqrt(1 + k*g2_0)) * (g2_0 / (1 + k*g2_0)))
+#   return(r / (r+1) * sumo)
+# }
+# 
 gamma.a.calc = function(g2a0, s, r, g2e0) {
   # function for getting overall population genotypic variance
   # (in terms of gamma)
@@ -91,8 +169,6 @@ init.sim = function(params, theta0) {
   sig.e = params$sig.e
   # initial genotype
   gbar0 = ifelse(any(grepl('gbar0', names(params))), params$gbar0, 0)
-  # density dependence strength
-  alpha = ifelse(any(grepl('alpha', names(params))), params$alpha, 0)
   # ceiling-like carrying capacity term
   kceil = ifelse(any(grepl('ceil' , names(params))), params$kceil, Inf)
   # equilibrium population growth rate 
@@ -135,7 +211,7 @@ init.sim = function(params, theta0) {
       # Phenotype
       z_i = b_i + e_i,
       # Survival
-      s_i = s.max * exp(-(z_i - theta0)^2 / (2*wfitn^2)) * exp(-alpha * size0),
+      s_i = s.max * exp(-(z_i - theta0)^2 / (2*wfitn^2)),
       # Offspring (0 for males, Poisson draw for females)
       r_i = rpois(size0, lambda = ifelse(fem, 2 * r, 0)),
       # Phenotypic optimum in this time step
@@ -176,8 +252,6 @@ propagate.sim = function(popn, params, theta, cur.i) {
   mu    = ifelse(any(grepl('mu', names(params))), params$mu, 0)
   # standard dev. of mutations
   sig.m = ifelse(any(grepl('sig.m', names(params))), params$sig.m, 0)
-  # Strength of density dependence
-  alpha = ifelse(any(grepl('alpha', names(params))), params$alpha, 0) 
   # ceiling-like carrying capacity term
   kceil = ifelse(any(grepl('ceil' , names(params))), params$kceil, Inf)
   
@@ -188,7 +262,7 @@ propagate.sim = function(popn, params, theta, cur.i) {
   popn.surv = popn %>% 
     # recalculate s_i based on current theta value
     mutate(theta_t = theta) %>%
-    mutate(s_i = s.max * exp(-(z_i - theta_t)^2 / (2*wfitn^2)) * exp(-alpha * nrow(.))) %>%
+    mutate(s_i = s.max * exp(-(z_i - theta_t)^2 / (2*wfitn^2))) %>%
     # simulate survival step using Bernoulli draw for each individual
     filter(as.logical(rbinom(n = nrow(.), size = 1, prob = s_i))) %>%
     # Handle parents - iterating forward age, current time step
@@ -226,7 +300,7 @@ propagate.sim = function(popn, params, theta, cur.i) {
                     rbinom(nrow(.), 1, mu) * rnorm(nrow(.), 0, sig.m),
                                                     # assign breeding value (mean is midparent, sd is sqrt(additive var))
              z_i = rnorm(nrow(.), b_i, sig.e),      # assign phenotype (mean is breding value, sd is sd of env. variance)
-             s_i = s.max * exp(-(z_i - theta)^2 / (2*wfitn^2)) * exp(-alpha * nrow(.)), # determine survival probability
+             s_i = s.max * exp(-(z_i - theta)^2 / (2*wfitn^2)), # determine survival probability
              r_i = rpois(nrow(.), lambda = ifelse(fem, 2 * r, 0)), # re-draw number of offspring per mother
              theta_t = theta) %>%                   # phenotypic optimum in this time step
       select(i, t, age, fem, b_i, z_i, s_i, r_i, theta_t)
@@ -276,8 +350,6 @@ sim = function(params, theta.t, init.rows, init.popn = NULL) {
   sig.e = params$sig.e
   # initial genotype
   gbar0 = ifelse(any(grepl('gbar0', names(params))), params$gbar0, 0)
-  # density dependence strength
-  alpha = ifelse(any(grepl('alpha', names(params))), params$alpha, 0)
   # ceiling-like carrying capacity term
   kceil = ifelse(any(grepl('ceil' , names(params))), params$kceil, Inf)
   
@@ -305,7 +377,7 @@ sim = function(params, theta.t, init.rows, init.popn = NULL) {
   if (!is.null(init.popn)) {
     init.popn = init.popn %>%
       mutate(theta_t = theta.t[1]) %>%
-      mutate(s_i = s.max * exp(-(z_i - theta_t)^2 / (2*wfitn^2)) * exp(-alpha * nrow(.)))
+      mutate(s_i = s.max * exp(-(z_i - theta_t)^2 / (2*wfitn^2)))
   } else {
     init.popn = init.sim(params = params, theta0 = theta.t[1])
   }
@@ -354,8 +426,6 @@ propagate.sim.r.first = function(popn, params, theta) {
   sig.a = params$sig.a
   # standard dev. of environmental phenoytpic noise
   sig.e = params$sig.e
-  # Strength of density dependence
-  alpha = ifelse(any(grepl('alpha', names(params))), params$alpha, 0) 
   
   # Only iterate if there are both male and females available for mating
   if (sum(popn$fem) & sum(!popn$fem)) {
@@ -392,7 +462,7 @@ propagate.sim.r.first = function(popn, params, theta) {
                       as.numeric(rbinom(nrow(.), 1, mu) * rnorm(nrow(.), 0, sig.m)),
                                                       # assign breeding value (mean is midparent, sd is sqrt(additive var))
                z_i = rnorm(nrow(.), b_i, sig.e),      # assign phenotype (mean is breding value, sd is sd of env. variance)
-               s_i = s.max * exp(-(z_i - theta)^2 / (2*wfitn^2)) * exp(-alpha * nrow(.)), # determine survival probability
+               s_i = s.max * exp(-(z_i - theta)^2 / (2*wfitn^2)), # determine survival probability
                r_i = rpois(nrow(.), lambda = ifelse(fem, 2 * r, 0)), # re-draw number of offspring per mother
                theta_t = theta) %>%                   # phenotypic optimum in this time step
         select(i, t, age, fem, b_i, z_i, s_i, r_i, theta_t)
@@ -411,7 +481,7 @@ propagate.sim.r.first = function(popn, params, theta) {
       mutate(r_i = rpois(nrow(.), lambda = ifelse(fem, 2 * r, 0))) %>%
       # recalculate s_i based on current theta value
       mutate(theta_t = theta) %>%
-      mutate(s_i = s.max * exp(-(z_i - theta_t)^2 / (2*wfitn^2)) * exp(-alpha * nrow(.))) %>%
+      mutate(s_i = s.max * exp(-(z_i - theta_t)^2 / (2*wfitn^2))) %>%
       # combine with offspring
       rbind(offspring) %>%
       # simulate survival step using Bernoulli draw for each individual
