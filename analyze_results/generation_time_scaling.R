@@ -216,7 +216,7 @@ gen.adjusted.z.bar %>%
   ungroup() %>%
   # Factor for plotting aesthetics
   mutate(
-    long = factor(s.max, labels = c('low', 'medium', 'high'), levels = c(0.9, 0.5, 0.1)),
+    long = factor(s.max, labels = c('high', 'medium', 'low'), levels = c(0.9, 0.5, 0.1)),
     # hert = factor(paste0('heritability ', h2)),
     hert = factor(paste0("h^2 == ", h2)),
     comp = relevel(factor(comp), ref = 'zbar')
@@ -272,5 +272,5 @@ gen.adjusted.z.bar %>%
   facet_wrap(~ hert, labeller = labeller(hert = label_parsed)) +
   theme(panel.background = element_blank(), legend.position = 'top')
   
-ggsave('analyze_results/figs_out/figS19_generation_time_scaling.png',
+ggsave('analyze_results/figs_out/figS21_generation_time_scaling.png',
        width = 8, height = 5)
