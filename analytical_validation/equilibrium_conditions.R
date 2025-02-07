@@ -557,9 +557,6 @@ ggsave('analytical_validation/validation_figs/fig_v10_rhok_age_steady.png',
 # locale:
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 # 
-# time zone: America/Los_Angeles
-# tzcode source: internal
-# 
 # attached base packages:
 # [1] parallel  stats     graphics  grDevices utils     datasets  methods   base     
 # 
