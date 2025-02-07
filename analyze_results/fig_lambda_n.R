@@ -46,20 +46,17 @@ lambda.z = lambdas %>%
   group_by(s.max, r, z, sig.z, lstar) %>%
   summarise(lambz = sum(pk * sbark * (1 + r))) %>%
   ungroup()
-  # # Get the lambda values as a function of z
-  # merge(y = data.frame(z = (0:300)/100)) %>%
-  # mutate(lambz = lstar * exp(-z^2 / 2)) %>%
-  # # Some labels for plotting and faceting
-  # 
 
 lambda.plot = lambda.z %>%
-  mutate(s.max = factor(s.max, levels = c(.9, .5, .1))) %>%
-  ggplot(aes(x = z, y = lambz, group = s.max)) +
+  # mutate(s.max = factor(s.max, levels = c(.9, .5, .1))) %>%
+  mutate(long = factor(s.max, labels = c('high', 'medium', 'low'), levels = c(0.9, 0.5, 0.1))) %>%
+  ggplot(aes(x = z, y = lambz, group = long)) +
   geom_segment(
     aes(x = 0, xend = 3, y = 1, yend = 1),
     linetype = 5, colour = 'gray88'
   ) +
-  geom_line(aes(colour = s.max)) +
+  # geom_line(aes(colour = s.max)) +
+  geom_line(aes(colour = long)) +
   # x-axis ticks are z-tilde
   # geom_rug(
   #   data = lambda.z %>%
@@ -123,7 +120,7 @@ n.plot
 
 fig.hypo.legend = get_plot_component(
   lambda.plot +
-    guides(colour = guide_legend(expression(hat(s))), linetype = 'none') +
+    guides(colour = guide_legend(linetype = 'none')) +
     theme(legend.position = 'top'),
   'guide-box', return_all = TRUE
 )[[4]]
