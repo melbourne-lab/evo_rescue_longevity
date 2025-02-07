@@ -14,51 +14,43 @@ backbone = expand.grid(
   # (Equilibrium) size of initial cohort
   s.max = c(0.7, 0.8, 0.9),
   # Gamma squared (pheno variance / sel pressure)
-  sig.z = sqrt((1:20)/50)
+  sig.z = sqrt((0:25)/50)
 ) %>%
   # Demographic rates
   mutate(
     # Maximum expected lifetime fitness
-    w.max = 2,
-    # Equilibrium lifetime fitness
-    wstar = w.max * (1 - s.max) / (sqrt(1 + sig.z^2) - s.max),
+    w.max = 3,
     # Mean fecundity
     r     = w.max * (1 - s.max) / s.max,
-    # Equilibrium population growth rate
-    lstar = (s.max + w.max * (1 - s.max)) / (s.max + (w.max/wstar) * (1 - s.max)),
-    # p0 in case it is useful
-    p0    = (w.max * (1 - s.max)) / (w.max * (1 - s.max) + s.max)
-  ) %>%
-  # Genetic info
-  filter(s.max < lstar) %>%
-  group_by(lstar, s.max, p0) %>%
-  mutate(
-    # Gamma-parameterization
-    # wfitn = 1 in gamma parameterization
-    wfitn = 1,
-    # Phenotypic standard deviation in new cohorts
-    sig.0 = sqrt(newt.method.g1(ifelse(sig.z^2 < .1, .001, .1), 1e-8, s.max / lstar, r)),
-    # Breeding value standard deviation in new cohorts
-  ) 
+  )
+
+backbone = cbind(
+    backbone,
+    backbone %>%
+      split(~ s.max + sig.z) %>%
+      map(\(x) newt.method.2d(1.1, .4, x$s.max, x$r, x$sig.z^2, 1e-5)) %>%
+      do.call(rbind, .)
+  )
 
 for.plot = merge(
-  backbone,
-  expand.grid(
-    # (Equilibrium) size of initial cohort
-    s.max = c(0.7, 0.8, 0.9),
-    # Gamma squared (pheno variance / sel pressure)
-    sig.z = sqrt((1:40)/100),
-    # Age
-    k = 0:15
-  )
+  backbone %>% rename(lstar = lam) %>% mutate(sig.0 = sqrt(g2_0)), 
+  data.frame(k = 0:15)
+  # expand.grid(
+  #   # (Equilibrium) size of initial cohort
+  #   s.max = c(0.7, 0.8, 0.9),
+  #   # Gamma squared (pheno variance / sel pressure)
+  #   sig.z = sqrt((1:40)/100),
+  #   # Age
+  #   k = 0:15
+  # )
 ) %>%
-  mutate(p.k = p0 * (s.max/lstar)^k * sqrt(1 / (1 + k*sig.0^2)))
+  mutate(p.k = (r / (1 + r)) * (s.max/lstar)^k * sqrt(1 / (1 + k*sig.0^2)))
 
 # Plot with probability of age on the natural scale
 plot.naturale = for.plot %>%
   ggplot(aes(x = k, y = p.k)) +
   geom_line(aes(group = sig.z, colour = sig.z^2)) +
-  scale_colour_gradient(low = 'darkviolet', high = 'darkorange', breaks = c(.1, .25, .4)) +
+  scale_colour_gradient(low = 'darkviolet', high = 'darkorange', breaks = c(0, .25, .5)) +
   facet_wrap(~ s.max, labeller = label_bquote(cols = hat(s) == .(s.max))) +
   labs(x = '', y = expression(p[age])) +
   theme(
@@ -70,7 +62,7 @@ plot.naturale = for.plot %>%
 plot.logscale = for.plot %>%
   ggplot(aes(x = k, y = p.k)) +
   geom_line(aes(group = sig.z, colour = sig.z^2)) +
-  scale_colour_gradient(low = 'darkviolet', high = 'darkorange', breaks = c(.1, .25, .4)) +
+  scale_colour_gradient(low = 'darkviolet', high = 'darkorange', breaks = c(0, .25, .5)) +
   scale_y_log10() +
   facet_wrap(~ s.max, labeller = label_bquote(cols = hat(s) == .(s.max))) +
   labs(x = 'age', y = expression(p[age])) +
@@ -81,14 +73,19 @@ plot.logscale = for.plot %>%
     legend.position = 'none'
   )
 
-plot.legend = get_legend(
+plot.legend = get_plot_component(
   plot.naturale +
     guides(
-      colour = guide_legend(expression(phenotypic ~ variance ~ gamma^2)),
-      override.aes = list(linewidth = 1.5)
+      colour = guide_coloursteps(expression(phenotypic ~ variance ~ gamma^2)),
+      override.aes = list(linewidth = 3)
     ) +
-    theme(legend.position = 'top')
-)
+    theme(
+      legend.position = 'top', 
+      legend.text = element_text(hjust = -0.25),
+      legend.title = element_text(vjust = 0.75)
+    ),
+  pattern = "guide-box", return_all = TRUE
+)[[4]]
 
 plot_grid(
   plot.legend,
@@ -99,4 +96,4 @@ plot_grid(
 )
 
 ggsave(filename = 'analyze_results/figs_out/figS1_age_distn.png',
-       width = 8, height = 6)
+       width = 8, height = 5)
