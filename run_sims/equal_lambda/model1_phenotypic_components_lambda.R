@@ -8,6 +8,7 @@
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(purrr)
 library(parallel)
 
 # Clear namespace
@@ -21,52 +22,67 @@ source('model_source/sim_model1_functions.R')
 # Trials per parameter combo
 trys.per = 200
 
-# Parameters
 pars = expand.grid(
   # (Equilibrium) size of initial cohort
-  s.max = c(0.1, 0.5, 0.9),
-  # Heritability of fitness
-  h2    = c(.25, .5, 1)
+  s.max = c(0.1, 0.5, 0.9)
 ) %>%
-  # Demographic rates
   mutate(
-    # Maximum expected lifetime fitness
+    # Maximum annual growth rate
     l.max = 1.4,
-    # Mean fecundity
-    r     = (l.max / s.max) - 1,
-    # Amount of phenotypic variance
+    # Phenotypic variance
     sig.z = sqrt(0.4),
-    # Equilibrium population growth rate
-    lstar = l.max / sqrt(1 + sig.z^2),
+    # Mean fecundity
+    r     = (l.max / s.max) - 1
+  )
+
+pars = cbind(
+  pars,
+  pars %>%
+    split(~ s.max + sig.z) %>%
+    map(\(x) newt.method.2d(1.1, .5, x$s.max, x$r, x$sig.z^2, 1e-5)) %>%
+    do.call(rbind, .)
+)
+
+pars = pars %>%
+  # Rename variables as needed
+  rename(
+    lstar = lam, 
+    sig.0 = g2_0
+  ) %>%
+  # Wrapper function above gives the squared phenotypic variance; convert to
+  # standard dev.
+  mutate(sig.0 = sqrt(sig.0)) %>%
+  # Repicate data frame above to include three heritability levels
+  merge(data.frame(h2 = c(0.25, .5, 1.0))) %>%
+  # Estimate genetic variance and environmental component variance in newborn
+  # cohorts
+  mutate(
+    sig.a = sqrt(h2 * sig.0^2), 
+    sig.e = sqrt((1 - h2) * sig.0^2)
+  ) %>%
+  # Add other necessary parameters as needed
+  mutate(
+    # Length of simulations
+    timesteps = 50,
     # Initial population size
     n.pop0 = 20000,
-    # Strength of density dependence
-    # alpha = log(lstar) / n.pop0,
-    # Ceciling-type carrying capacity just in case
-    kceil = 20000, # 30000,
-    p0    = r / (1 + r)
-  ) %>%
-  # Genetic info
-  group_by(lstar, s.max, h2, p0) %>%
-  mutate(
-    # Gamma-parameterization
-    # wfitn = 1 in gamma parameterization
+    # Ceiling-type carrying capacity
+    kceil = 20000,
+    # Initial population distance from phenotypic optimum (i.e., magnitude of
+    # environmental shift)
+    gbar0 = 2,
+    # Width of fitness landscape
+    # (setting this to 1 makes the simulation follow the gamma-parameterization
+    # in manuscript)
     wfitn = 1,
-    # Phenotypic standard deviation in new cohorts
-    sig.0 = sqrt(newt.method.g1(.1, 1e-8, s.max / lstar, r)),
-    # Breeding value standard deviation in new cohorts
-    sig.a = sqrt(h2 * sig.0^2),
-    # Non-inherited standard dxeviation in new cohorts
-    sig.e = sqrt((1-h2) * sig.0^2),
-    # Population-wide breeding value standard deviation
-    sig.p = sqrt(gamma.a.calc(sig.a^2, s.max / lstar, r, sig.e^2)),
+    # Per-individual mutation rate
     mu    = 1,
-    sig.m = sqrt(wfitn^2 * (sig.a^2 - (sig.p^2 - p0*sig.a^2)/(1-p0))),
-    gbar0 = 2
-  ) %>%
-  ungroup() %>%
-  # Other junk
-  mutate(timesteps = 50)
+    # Population-wide additive genetic variance (needed to get mutational
+    # variance)
+    sig.p = sqrt(gamma.a.calc(sig.a^2, s.max / lstar, r, sig.e^2)),
+    # Mutational variance
+    sig.m = sqrt(wfitn^2 * (sig.a^2 - sig.p^2) * (1 + r)),
+  )
 
 # Run simulations
 set.seed(233024)
@@ -91,7 +107,7 @@ sim.out2 = mclapply(
       )  %>%
       mutate(
         trial = pars$try.no, 
-        p0    = pars$p0,
+        s.max = pars$s.max,
         lstar = pars$lstar,
         h2    = pars$h2
       )
