@@ -89,10 +89,10 @@ ggsave('analyze_results/figs_out/fig5_agedist_highlong.png', width = 8, height =
 ### Plot for medium and low longevity groups
 
 age.dist %>%
-  filter(p0 > 0.5) %>%
+  filter(s.max < 0.9) %>%
   mutate(
     # long = longevity
-    long = factor(p0, labels = c('medium longevity', 'low longevity')),
+    long = factor(s.max, labels = c('low longevity', 'medium longevity')),
     # hert = heritability
     hert = factor(paste("h^2 ==", h2))
   ) %>%
@@ -118,5 +118,5 @@ age.dist %>%
     panel.background = element_blank()
   )
 
-ggsave('analyze_results/figs_out/figS2_agedist_medlowlong.png', width = 8, height = 5)
+ggsave('analyze_results/figs_out/figS20_agedist_medlowlong.png', width = 8, height = 5)
 
