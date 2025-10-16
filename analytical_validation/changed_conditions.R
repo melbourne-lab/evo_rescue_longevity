@@ -15,9 +15,8 @@
 #     these are presented as a time-series as the validated expressions
 #     demonstrate cohort dynamics through time
 # - Script contains plots for: 
-#   - Mean of each phenotypic component over time (per cohort)
-#   - Variance of each phenotypic component (per age)
-# - init 18 Dec. 2023, revised 6 Feb. 2025 for resubmission
+#   - Mean of each phenotypic component over time (per cohort) (Figs. S11-13)
+#   - Variance of each phenotypic component (per age) (Figs. S14-17)
 ##########
 
 
@@ -25,6 +24,7 @@
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(purrr)
 library(parallel)
 
 # Clear namespace
@@ -36,7 +36,7 @@ source('model_source/sim_model1_functions.R')
 ### Load in parameters
 
 # Trials per parameter combo
-trys.per = 100
+trys.per = 400
 
 # Parameters
 pars = expand.grid(
@@ -86,13 +86,13 @@ pars = pars %>%
   mutate(
     # Length of simulations
     timesteps = 3,
-    # Initial pouplation size
+    # Initial population size
     n.pop0 = 5000,
     # Ceiling-type carrying capacity
     kceil = 5000,
     # Initial population distance from phenotypic optimum (i.e., magnitude of
     # environmental shift)
-    gbar0 = 0,
+    gbar0 = 1,
     # Width of fitness landscape
     # (setting this to 1 makes the simulation follow the gamma-parameterization
     # in manuscript)
@@ -112,7 +112,7 @@ set.seed(820991)
 sim.out = mclapply(
   pars %>% uncount(trys.per) %>% mutate(try.no = 1:(nrow(.))) %>% split(.$try.no),
   function(pars) {
-    sim(pars, theta.t = 0, init.rows = 5 * 5000) %>%
+    sim(pars, theta.t = 0, init.rows = 4 * 5000) %>%
       mutate(e_i = z_i - b_i) %>%
       group_by(t, age) %>%
       summarise(
@@ -199,9 +199,9 @@ coh.analyticals = merge(
 
 head(coh.analyticals)
 
-# Mean breeding value 
+# Mean breeding value Fig. S11
 coh.sum %>%
-  filter(k < 5, k >= t, h2 %in% 0.5, n > 10) %>%
+  filter(k < 5, k >= t, h2 %in% 0.5, n > 9) %>%
   ggplot(aes(x = t, y = b_i_bar)) +
   geom_line(aes(group = k, colour = k), linewidth = 0.5) +
   geom_point(
@@ -222,15 +222,16 @@ coh.sum %>%
   theme(
     panel.background = element_blank(),
     legend.position = 'top',
-    legend.title.align = 0.5
+    legend.title.align = 0.5,
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analytical_validation/validation_figs/fig_v11_bbar_change.png',
+ggsave('analytical_validation/validation_figs/figS11_validate_bbar_change.pdf',
        width = 8, height = 5)
 
-# Mean environmental portion of phenotype
+# Mean environmental portion of phenotype Fig. S12
 coh.sum %>%
-  filter(k < 5, k >= t, h2 %in% 0.5, n > 10) %>%
+  filter(k < 5, k >= t, h2 %in% 0.5, n > 9) %>%
   ggplot(aes(x = t, y = e_i_bar)) +
   geom_line(aes(group = k, colour = k), linewidth = 0.5) +
   geom_point(
@@ -251,15 +252,16 @@ coh.sum %>%
   theme(
     panel.background = element_blank(),
     legend.position = 'top',
-    legend.title.align = 0.5
+    legend.title.align = 0.5,
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analytical_validation/validation_figs/fig_v12_ebar_change.png',
+ggsave('analytical_validation/validation_figs/figS12_validate_ebar_change.pdf',
        width = 8, height = 5)
 
-# Mean phenotype
+# Mean phenotype Fig. S13
 coh.sum %>%
-  filter(k < 5, k >= t, h2 %in% 0.5, n > 10) %>%
+  filter(k < 5, k >= t, h2 %in% 0.5, n > 9) %>%
   ggplot(aes(x = t, y = z_i_bar)) +
   geom_line(aes(group = k, colour = k), linewidth = 0.5) +
   geom_point(
@@ -280,10 +282,11 @@ coh.sum %>%
   theme(
     panel.background = element_blank(),
     legend.position = 'top',
-    legend.title.align = 0.5
+    legend.title.align = 0.5,
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analytical_validation/validation_figs/fig_v13_zbar_change.png',
+ggsave('analytical_validation/validation_figs/figS13_validate_zbar_change.pdf',
        width = 8, height = 5)
 
 
@@ -341,7 +344,7 @@ age.analyticals = merge(
     varn = factor(paste0('gamma^2 == ', sig.z^2))
   )
 
-# Additive genetic variance after environmental change
+# Additive genetic variance after environmental change Fig. S14
 age.sum %>%
   filter(t > 0, k < 10, k >= t) %>%
   ggplot(aes(x = k, y = b_i_var)) +
@@ -360,13 +363,14 @@ age.sum %>%
   ) +
   theme(
     panel.background = element_blank(),
-    legend.position = 'top'
+    legend.position = 'top',
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analytical_validation/validation_figs/fig_v14_bvar_change.png',
+ggsave('analytical_validation/validation_figs/figS14_validate_bvar_change.pdf',
        width = 8, height = 5)
 
-# Environmental portion of phenotype variance after environmental change
+# Environmental portion of phenotype variance after environmental change Fig. S15
 age.sum %>%
   filter(t > 0, k < 10, k >= t) %>%
   ggplot(aes(x = k, y = e_i_var)) +
@@ -385,13 +389,14 @@ age.sum %>%
   ) +
   theme(
     panel.background = element_blank(),
-    legend.position = 'top'
+    legend.position = 'top',
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analytical_validation/validation_figs/fig_v15_evar_change.png',
+ggsave('analytical_validation/validation_figs/figS15_validate_evar_change.pdf',
        width = 8, height = 5)
 
-# Phenotypic variance after environmental change
+# Phenotypic variance after environmental change Fig. S16
 age.sum %>%
   filter(t > 0, k < 10, k >= t) %>%
   ggplot(aes(x = k, y = z_i_var)) +
@@ -410,12 +415,14 @@ age.sum %>%
   ) +
   theme(
     panel.background = element_blank(),
-    legend.position = 'top'
+    legend.position = 'top',
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analytical_validation/validation_figs/fig_v16_zvar_change.png',
+ggsave('analytical_validation/validation_figs/figS16_validate_zvar_change.pdf',
        width = 8, height = 5)
 
+# Correlation of genotypic and environmental phenotypic components after environmental cahnge Fig. S17
 age.sum %>%
   filter(t > 0, k < 10, k >= t, !is.na(rho_k)) %>%
   ggplot(aes(x = k, y = rho_k)) +
@@ -434,14 +441,16 @@ age.sum %>%
   ) +
   theme(
     panel.background = element_blank(),
-    legend.position = 'top'
+    legend.position = 'top',
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analytical_validation/validation_figs/fig_v17_rhok_change.png',
+ggsave('analytical_validation/validation_figs/figS17_validate_rhok_change.pdf',
        width = 8, height = 5)
 
 
-### Session info (6 Feb. 2025)
+### Session info (16 Sept. 2025)
+
 # R version 4.3.0 (2023-04-21)
 # Platform: aarch64-apple-darwin20 (64-bit)
 # Running under: macOS Big Sur 11.2.3
@@ -453,19 +462,19 @@ ggsave('analytical_validation/validation_figs/fig_v17_rhok_change.png',
 # locale:
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 # 
+# time zone: America/Los_Angeles
+# tzcode source: internal
+# 
 # attached base packages:
 # [1] parallel  stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-# [1] cowplot_1.1.1 mc2d_0.1-22   mvtnorm_1.1-3 purrr_1.0.2   tidyr_1.3.0   dplyr_1.1.3  
-# [7] ggplot2_3.5.1
+# [1] mc2d_0.1-22   mvtnorm_1.1-3 cowplot_1.1.1 purrr_1.0.2   tidyr_1.3.0   dplyr_1.1.3   ggplot2_3.5.1
 # 
 # loaded via a namespace (and not attached):
-# [1] crayon_1.5.2      vctrs_0.6.3       cli_3.6.1         rlang_1.1.4      
-# [5] generics_0.1.3    textshaping_0.3.6 glue_1.6.2        labeling_0.4.3   
-# [9] colorspace_2.1-0  ragg_1.2.5        scales_1.3.0      fansi_1.0.4      
-# [13] grid_4.3.0        munsell_0.5.0     tibble_3.2.1      lifecycle_1.0.3  
-# [17] compiler_4.3.0    pkgconfig_2.0.3   rstudioapi_0.15.0 systemfonts_1.0.4
-# [21] farver_2.1.1      viridisLite_0.4.2 R6_2.5.1          tidyselect_1.2.0 
-# [25] utf8_1.2.3        pillar_1.9.0      magrittr_2.0.3    tools_4.3.0      
-# [29] withr_2.5.0       gtable_0.3.4 
+# [1] crayon_1.5.2      vctrs_0.6.3       cli_3.6.1         rlang_1.1.4       generics_0.1.3   
+# [6] textshaping_0.3.6 labeling_0.4.3    glue_1.6.2        colorspace_2.1-0  ragg_1.2.5       
+# [11] scales_1.3.0      fansi_1.0.4       grid_4.3.0        munsell_0.5.0     tibble_3.2.1     
+# [16] lifecycle_1.0.3   compiler_4.3.0    pkgconfig_2.0.3   rstudioapi_0.15.0 farver_2.1.1     
+# [21] systemfonts_1.0.4 viridisLite_0.4.2 R6_2.5.1          tidyselect_1.2.1  utf8_1.2.3       
+# [26] pillar_1.9.0      magrittr_2.0.3    tools_4.3.0       withr_2.5.0       gtable_0.3.4

@@ -9,11 +9,9 @@
 #   also aggregate by age to get one estimate of the mean per time step per age
 #   (because this is at steady state, the time steps should all be the same on average)
 # - Script contains plots for: 
-#   - Population size over time
-#   - Age structure - probability of being in each age
-#   - Mean of each phenotypic component (population-level)
-#   - Variance of each phenotypic component (per age)
-# - init 11 Dec. 2023, updated 6 Feb. 2025 for revision
+#   - Age structure - probability of being in each age (Figs. S3-4)
+#   - Mean of each phenotypic component (population-level) (Figs. S5-7)
+#   - Variance of each phenotypic component (per age) (Figs. S8-10)
 ##########
 
 # Packages
@@ -207,25 +205,7 @@ n.pheno.means = sim.out %>%
 
 ### Begin plots
 
-# Population size plot is no longer useful under a ceiling-type density dependence
-# # Population size plot
-# n.pheno.means %>%
-#   ggplot(aes(x = t, y = n)) +
-#   geom_line(aes(group = trial, colour = long), linewidth = 0.5) +
-#   # scale_colour_brewer(palette = 'Dark2', 'longevity') +
-#   scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
-#   scale_x_continuous(breaks = (0:2)*5) +
-#   labs(x = 'Time step', y = 'Population size') +
-#   facet_grid(cols = vars(hert), rows = vars(varn), labeller = label_parsed) +
-#   theme(
-#     panel.background = element_blank(),
-#     legend.position = 'top'
-#   )
-# 
-# ggsave('analytical_validation/validation_figs/fig_v1_popsize.png',
-#        width = 8, height = 5)
-
-# Age structure (all ages)
+# Age structure (all ages), Fig. S3
 sim.sum %>%
   filter(t > 0, n.obs > 3) %>%
   ggplot(aes(x = k, y = p_k)) +
@@ -258,13 +238,14 @@ sim.sum %>%
   facet_grid(cols = vars(hert), rows = vars(varn), labeller = label_parsed) +
   theme(
     panel.background = element_blank(),
-    legend.position = 'top'
+    legend.position = 'top',
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analytical_validation/validation_figs/fig_v2_age_full.png',
+ggsave('analytical_validation/validation_figs/figS3_validate_age_full.pdf',
        width = 8, height = 5)
 
-# Age structure (only ages 0-9)
+# Age structure (only ages 0-9), Fig. S4
 sim.sum %>%
   filter(t > 0, k < 10, n.obs > 3) %>%
   ggplot(aes(x = k, y = p_k)) +
@@ -295,13 +276,14 @@ sim.sum %>%
   facet_grid(cols = vars(hert), rows = vars(varn), labeller = label_parsed) +
   theme(
     panel.background = element_blank(),
-    legend.position = 'top'
+    legend.position = 'top',
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analytical_validation/validation_figs/fig_v3_age_0-9.png',
+ggsave('analytical_validation/validation_figs/figS4_validate_age_0-9.pdf',
        width = 8, height = 5)
 
-# Mean breeding value over time (should average around zero)
+# Mean breeding value over time (should average around zero), Fig. S5
 n.pheno.means %>%
   ggplot(aes(x = t, y = b_i_bar, group = trial)) + 
   geom_line(aes(colour = long), linewidth = 0.5) + 
@@ -323,13 +305,14 @@ n.pheno.means %>%
   ) +
   theme(
     panel.background = element_blank(),
-    legend.position = 'top'
+    legend.position = 'top',
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analytical_validation/validation_figs/fig_v4_bbar_steady.png',
+ggsave('analytical_validation/validation_figs/figS5_validate_bbar_steady.pdf',
        width = 8, height = 5)
 
-# Mean non-environmental component (should average around zero)
+# Mean non-environmental component (should average around zero), Fig. S6
 n.pheno.means %>%
   ggplot(aes(x = t, y = e_i_bar, group = trial)) + 
   geom_line(aes(colour = long), linewidth = 0.5) + 
@@ -351,13 +334,14 @@ n.pheno.means %>%
   ) +
   theme(
     panel.background = element_blank(),
-    legend.position = 'top'
+    legend.position = 'top',
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analytical_validation/validation_figs/fig_v5_ebar_steady.png',
+ggsave('analytical_validation/validation_figs/figS6_validate_ebar_steady.pdf',
        width = 8, height = 5)
 
-# Mean phenotype over time (should average around zero)
+# Mean phenotype over time (should average around zero), Fig. S7
 n.pheno.means %>%
   ggplot(aes(x = t, y = z_i_bar, group = trial)) + 
   geom_line(aes(colour = long), linewidth = 0.5) + 
@@ -379,13 +363,14 @@ n.pheno.means %>%
   ) +
   theme(
     panel.background = element_blank(),
-    legend.position = 'top'
+    legend.position = 'top',
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analytical_validation/validation_figs/fig_v6_zbar_steady.png',
+ggsave('analytical_validation/validation_figs/figS7_validate_zbar_steady.pdf',
        width = 8, height = 5)
 
-# Additive genetic variance
+# Additive genetic variance, Fig. S8
 sim.sum %>%
   filter(t > 0, k < 10, n.obs > 3) %>%
   mutate(
@@ -418,13 +403,14 @@ sim.sum %>%
   ) +
   theme(
     panel.background = element_blank(),
-    legend.position = 'top'
+    legend.position = 'top',
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analytical_validation/validation_figs/fig_v7_bvar_age_steady.png',
+ggsave('analytical_validation/validation_figs/figS8_validate_bvar_age_steady.pdf',
        width = 8, height = 5)
 
-# Environmental phenotypic variance
+# Environmental phenotypic variance, Fig. S9
 sim.sum %>%
   filter(t > 0, k < 10, n.obs > 3) %>%
   mutate(
@@ -457,13 +443,14 @@ sim.sum %>%
   ) +
   theme(
     panel.background = element_blank(),
-    legend.position = 'top'
+    legend.position = 'top',
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analytical_validation/validation_figs/fig_v8_evar_age_steady.png',
+ggsave('analytical_validation/validation_figs/figS9_validate_evar_age_steady.pdf',
        width = 8, height = 5)
 
-# Phenotypic variance
+# Phenotypic variance, Fig. S10
 sim.sum %>%
   filter(t > 0, k < 10, n.obs > 3) %>%
   mutate(
@@ -496,55 +483,15 @@ sim.sum %>%
   ) +
   theme(
     panel.background = element_blank(),
-    legend.position = 'top'
+    legend.position = 'top',
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analytical_validation/validation_figs/fig_v9_zvar_age_steady.png',
+ggsave('analytical_validation/validation_figs/figS10_validate_zvar_age_steady.pdf',
        width = 8, height = 5)
 
 
-# Breeding value-environmental component correlation
-
-sim.sum %>%
-  filter(t > 0, k < 10, h2 < 1, n.obs > 3) %>%
-  mutate(
-    h2 = factor(h2),
-    long = factor(paste(long, 'longevity')),
-    long = factor(long, levels = levels(long)[c(2, 3, 1)])
-  ) %>%
-  ggplot(aes(x = k, y = rho_k)) +
-  geom_line(aes(group = interaction(h2, t), colour = h2), linewidth = 0.1) +
-  geom_point(
-    data = analyticals %>%
-      filter(k < 10, h2 < 1) %>% 
-      mutate(
-        var.z = sig.z^2, 
-        h2 = factor(h2),
-        long = factor(paste(long, 'longevity')),
-        long = factor(long, levels = levels(long)[c(2, 3, 1)])
-      ),
-    aes(x = k, y = rho_k, colour = h2),
-    size = 2, shape = 21
-  ) +
-  # scale_colour_brewer(palette = 'Dark2', 'longevity') +
-  # scale_fill_brewer(palette = 'Dark2', 'longevity') +
-  scale_colour_manual(values = c('gray77', 'gray11'), expression(h^2)) +
-  scale_x_continuous(breaks = (0:3)*3) +
-  labs(x = 'Age', y = expression(gamma^2 ~ at ~ age)) +
-  facet_grid(
-    cols = vars(long), rows = vars(varn), 
-    labeller = labeller(long = label_value, varn = label_parsed)
-  ) +
-  theme(
-    panel.background = element_blank(),
-    legend.position = 'top'
-  )
-
-ggsave('analytical_validation/validation_figs/fig_v10_rhok_age_steady.png',
-       width = 8, height = 5)
-
-
-### SessionInfo (6 Feb. 2025)
+### SessionInfo (16 Sept. 2025)
 
 # R version 4.3.0 (2023-04-21)
 # Platform: aarch64-apple-darwin20 (64-bit)
@@ -557,19 +504,19 @@ ggsave('analytical_validation/validation_figs/fig_v10_rhok_age_steady.png',
 # locale:
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 # 
+# time zone: America/Los_Angeles
+# tzcode source: internal
+# 
 # attached base packages:
 # [1] parallel  stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-# [1] cowplot_1.1.1 mc2d_0.1-22   mvtnorm_1.1-3 purrr_1.0.2   tidyr_1.3.0   dplyr_1.1.3  
-# [7] ggplot2_3.5.1
+# [1] mc2d_0.1-22   mvtnorm_1.1-3 cowplot_1.1.1 purrr_1.0.2   tidyr_1.3.0   dplyr_1.1.3   ggplot2_3.5.1
 # 
 # loaded via a namespace (and not attached):
-# [1] crayon_1.5.2      vctrs_0.6.3       cli_3.6.1         rlang_1.1.4      
-# [5] generics_0.1.3    textshaping_0.3.6 glue_1.6.2        labeling_0.4.3   
-# [9] colorspace_2.1-0  ragg_1.2.5        scales_1.3.0      fansi_1.0.4      
-# [13] grid_4.3.0        munsell_0.5.0     tibble_3.2.1      lifecycle_1.0.3  
-# [17] compiler_4.3.0    pkgconfig_2.0.3   rstudioapi_0.15.0 systemfonts_1.0.4
-# [21] farver_2.1.1      viridisLite_0.4.2 R6_2.5.1          tidyselect_1.2.0 
-# [25] utf8_1.2.3        pillar_1.9.0      magrittr_2.0.3    tools_4.3.0      
-# [29] withr_2.5.0       gtable_0.3.4   
+# [1] vctrs_0.6.3       cli_3.6.1         rlang_1.1.4       generics_0.1.3    textshaping_0.3.6
+# [6] labeling_0.4.3    glue_1.6.2        colorspace_2.1-0  ragg_1.2.5        scales_1.3.0     
+# [11] fansi_1.0.4       grid_4.3.0        munsell_0.5.0     tibble_3.2.1      lifecycle_1.0.3  
+# [16] compiler_4.3.0    pkgconfig_2.0.3   rstudioapi_0.15.0 farver_2.1.1      systemfonts_1.0.4
+# [21] viridisLite_0.4.2 R6_2.5.1          tidyselect_1.2.1  utf8_1.2.3        pillar_1.9.0     
+# [26] magrittr_2.0.3    tools_4.3.0       withr_2.5.0       gtable_0.3.4 
