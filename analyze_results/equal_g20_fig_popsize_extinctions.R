@@ -1,6 +1,5 @@
-### Script for reproducing figs. S17 and S18 in manuscript
-# (figures are population size and extinction rates in simulations with
-# equal-lambda i.e. no life history trade-off)
+### Script for reproducing Figs. S23 and S24 (population size and extinction
+### rates over time resp.) for the equal-gamma^2 simulations
 
 library(ggplot2)
 library(dplyr)
@@ -12,22 +11,22 @@ rm(list = ls())
 source('model_source/sim_model1_functions.R')
 
 # Number of trials per group
-trys.per = 500
+trys.per = 1000
 
 # Read in data (all population sizes)
-n.all = read.csv('run_sims/out/equal_lambda/sim_results_m1_allsizes_n.csv') %>%
+n.all = read.csv('run_sims/out/sim_results_m1_allsizes_n_equalg20.csv') %>%
   # Factor for plotting aesthetics
   mutate(
     long = factor(s.max, labels = c('high', 'medium', 'low'), levels = c(0.9, 0.5, 0.1)),
     hert = factor(paste0('h^2 == ', h2)),
-    varn = factor(paste0('gamma^2 == ', var.z))
+    varn = factor(paste0('gamma[0]^2 == ', var.z))
   )
 
 nrow(n.all)
 head(n.all)
 
 # Read in data for individual trials
-n.ind = read.csv('run_sims/out/equal_lambda/sim_results_m1_disaggregated_n.csv') %>% 
+n.ind = read.csv('run_sims/out/sim_results_m1_disaggregated_n_equalg20.csv') %>%
   # Adding in zeros (not recorded when simulation ended but useful for visualizing results in figure)
   complete(t, nesting(trial, s.max, var.z, h2)) %>%
   mutate(n = ifelse(is.na(n), 0, n)) %>% 
@@ -35,14 +34,13 @@ n.ind = read.csv('run_sims/out/equal_lambda/sim_results_m1_disaggregated_n.csv')
   mutate(
     long = factor(s.max, labels = c('high', 'medium', 'low'), levels = c(0.9, 0.5, 0.1)),
     hert = factor(paste0('h^2 == ', h2)),
-    varn = factor(paste0('gamma^2 == ', var.z))
+    varn = factor(paste0('gamma[0]^2 == ', var.z))
   )
 
 nrow(n.ind)
 head(n.ind)
 
-
-# Make plot of mean and example population sizes
+# Plot of mean and example population sizes (Fig. S23)
 n.all %>%
   ggplot(aes(x = t, group = long)) +
   geom_line(
@@ -72,6 +70,8 @@ n.all %>%
   labs(x = 'Time step', y = 'Population size') +
   scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
   scale_fill_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  # scale_colour_manual(values = c("#E69F00", "#56B4E9", "#999999"), 'longevity') +
+  # scale_fill_manual(values = c("#E69F00", "#56B4E9", "#999999"), 'longevity') +
   # scale_colour_brewer(palette = 'Dark2', 'longevity') +
   # scale_fill_brewer(palette = 'Dark2', 'longevity') +
   facet_grid(rows = vars(varn), cols = vars(hert), labeller = label_parsed) +
@@ -81,22 +81,25 @@ n.all %>%
     text = element_text(family = 'ArialMT')
   )
 
-ggsave('analyze_results/figs_out/figS18_popsize.pdf',
+ggsave('analyze_results/figs_out/figS23_popsize.pdf',
        width = 5, height = 5)
 
-# Plot of extinctions over time
+
+# Plot of extinctions over time (Fig. S24)
 n.all %>%
   ggplot(aes(x = t, y = psrv)) +
   geom_line(aes(colour = long), linewidth = 1.2) +
   labs(x = 'Time step', y = 'Proportion surviving') +
   scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
+  # scale_colour_manual(values = c("#E69F00", "#56B4E9", "#999999"), 'longevity')
   # scale_colour_brewer(palette = 'Dark2', 'longevity') +
   facet_grid(rows = vars(varn), cols = vars(hert), labeller = label_parsed) +
   theme(
     panel.background = element_blank(),
     legend.position = 'top',
-    text = element_text(family = 'ArialMT')
+    text = element_text(face = 'ArialMT')
   )
 
-ggsave('analyze_results/figs_out/figS19_extinctions.pdf',
+ggsave('analyze_results/figs_out/figS24_extinctions.pdf',
        width = 5, height = 5)
+
