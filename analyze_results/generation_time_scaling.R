@@ -77,77 +77,6 @@ pars = pars %>%
     sig.m = sqrt(wfitn^2 * (sig.a^2 - sig.p^2) * (1 + r)),
   )
 
-# Old pars setup below:
-# pars = expand.grid(
-#   # (Equilibrium) size of initial cohort
-#   s.max = c(0.1, 0.5, 0.9),
-#   # Heritability of fitness
-#   h2    = c(.25, .5, 1)
-# ) %>%
-#   # Demographic rates
-#   mutate(
-#     # Maximum expected lifetime fitness
-#     w.max = 3,
-#     # Gamma squared (pheno variance / sel pressure)
-#     sig.z = sqrt(.4),
-#     # Equilibrium lifetime fitness
-#     wstar = w.max * (1 - s.max) / (sqrt(1 + sig.z^2) - s.max),
-#     # Mean fecundity
-#     r     = w.max * (1 - s.max) / s.max,
-#     # Equilibrium population growth rate
-#     lstar = (s.max + w.max * (1 - s.max)) / (s.max + (w.max/wstar) * (1 - s.max)),
-#     # Initial population size
-#     n.pop0 = 20000,
-#     # Strength of density dependence
-#     alpha = log(lstar) / n.pop0,
-#     # Ceciling-type carrying capacity just in case
-#     kceil = 20000,
-#     p0    = (w.max * (1 - s.max)) / (w.max * (1 - s.max) + s.max)
-#   ) %>%
-#   # Genetic info
-#   group_by(lstar, s.max, h2, p0) %>%
-#   mutate(
-#     # Gamma-parameterization
-#     # wfitn = 1 in gamma parameterization
-#     wfitn = 1,
-#     # Phenotypic standard deviation in new cohorts
-#     sig.0 = sqrt(newt.method.g1(.1, 1e-8, s.max / lstar, r)),
-#     # Breeding value standard deviation in new cohorts
-#     sig.a = sqrt(h2 * sig.0^2),
-#     # Non-inherited standard dxeviation in new cohorts
-#     sig.e = sqrt((1-h2) * sig.0^2),
-#     # Population-wide breeding value standard deviation
-#     sig.p = sqrt(gamma.a.calc(sig.a^2, s.max / lstar, r, sig.e^2)),
-#     mu    = 1,
-#     sig.m = sqrt(wfitn^2 * (sig.a^2 - (sig.p^2 - p0*sig.a^2)/(1-p0))),
-#     gbar0 = 2
-#   ) %>%
-#   ungroup() %>%
-#   # Other junk
-#   mutate(timesteps = 50)
-
-# Generatio time is:
-# T = log(R_0) / R
-#   where R_0 is net reproductive number, R is intrinsic population growth rate
-#   R = log(lambda*)
-#   R_0 is just r (per-mating bout fecundity) times mean life expectancy
-#   (unfortunately I don't have a neat, closed form expression for mean life
-#   expectancy)
-
-# pars %>%
-#   distinct(s.max, r, lstar, sig.0) %>%
-#   uncount(weight = 501) %>%
-#   group_by(s.max, r, lstar, sig.0) %>%
-#   mutate(
-#     k = 0:500,
-#     p_k = (r/(1+r)) * (s.max / lstar)^k * (1 / sqrt(1 + k*sig.0^2)),
-#     mm = cumsum(k * p_k)
-#   ) %>%
-#   mutate(s.max = factor(s.max)) %>%
-#   ggplot(aes(x = k, y = mm, group = s.max)) +
-#   geom_line(aes(colour = s.max)) +
-#   facet_wrap(~ sig.0^2)
-
 gen.ts = pars %>%
   distinct(s.max, r, lstar, sig.0) %>%
   uncount(weight = 501) %>%
@@ -270,7 +199,10 @@ gen.adjusted.z.bar %>%
     linetype = guide_legend(order = 1, override.aes = list(linewidth = 1))
   ) +
   facet_wrap(~ hert, labeller = labeller(hert = label_parsed)) +
-  theme(panel.background = element_blank(), legend.position = 'top')
+  theme(
+    panel.background = element_blank(), 
+    legend.position = 'top',
+  )
   
-ggsave('analyze_results/figs_out/figS21_generation_time_scaling.png',
+ggsave('analyze_results/figs_out/figS28_generation_time_scaling.pdf',
        width = 8, height = 5)
