@@ -1,5 +1,5 @@
 ### Script for generating figures with observed age distributions
-### (submitted manu version has these as Figs. 5 and S2)
+### (submitted manu version has these as Figs. 5 and S27)
 
 library(ggplot2) # 3.4.3
 library(dplyr)   # 1.1.3
@@ -56,11 +56,12 @@ age.dist %>%
   scale_fill_viridis_d(option = 'B', 'age') +
   facet_grid(rows = vars(long), cols = vars(hert), labeller = label_parsed) +
   theme(
-    panel.background = element_blank()
+    panel.background = element_blank(),
+    text = element_text(family = 'ArialMT')
   )
 
 
-### Plot for *only* high longevity
+### Plot for *only* high longevity (Fig. 5, main text)
 
 age.dist %>%
   filter(s.max > 0.5) %>%
@@ -81,12 +82,13 @@ age.dist %>%
   scale_fill_viridis_d(option = 'B', 'age') +
   facet_grid(cols = vars(hert), labeller = label_parsed) +
   theme(
-    panel.background = element_blank()
+    panel.background = element_blank(),
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analyze_results/figs_out/fig5_agedist_highlong.png', width = 8, height = 3)
+ggsave('analyze_results/figs_out/fig5_agedist_highlong.pdf', width = 8, height = 3)
 
-### Plot for medium and low longevity groups
+### Plot for medium and low longevity groups (Fig. S27)
 
 age.dist %>%
   filter(s.max < 0.9) %>%
@@ -115,8 +117,9 @@ age.dist %>%
     labeller = labeller(hert = label_parsed, long = label_value)
   ) +
   theme(
-    panel.background = element_blank()
+    panel.background = element_blank(),
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analyze_results/figs_out/figS20_agedist_medlowlong.png', width = 8, height = 5)
+ggsave('analyze_results/figs_out/figS27_agedist_medlowlong.pdf', width = 8, height = 5)
 

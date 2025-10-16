@@ -6,6 +6,8 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 
+rm(list = ls())
+
 w.by.s.by.z = expand.grid(
   # Phenotype
   z = (1:300)/100,
@@ -36,9 +38,10 @@ w.by.s.by.z %>%
   theme(
     panel.background = element_rect(fill = NA),
     legend.position = 'top',
-    legend.title = element_text(vjust = 0.75, hjust = 0.5)
+    legend.title = element_text(vjust = 0.75, hjust = 0.5),
+    text = element_text(family = 'ArialMT')
   )
 
 # Export figure 
-ggsave('analyze_results/figs_out/figS22_lifetime_fitness.png', width = 8, height = 5)
+ggsave('analyze_results/figs_out/figS1_lifetime_fitness.pdf', width = 8, height = 5)
   

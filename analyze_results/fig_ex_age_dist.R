@@ -1,5 +1,4 @@
-# Script for plotting example age distributions (supplemental figure S1 in )
-# - 25 May 2023
+# Script for plotting example age distributions (supplemental figure S2)
 
 library(ggplot2)
 library(dplyr)
@@ -55,7 +54,8 @@ plot.naturale = for.plot %>%
   labs(x = '', y = expression(p[age])) +
   theme(
     panel.background = element_blank(),
-    legend.position = 'none'
+    legend.position = 'none',
+    text = element_text(family = 'ArialMT')
   )
 
 # Plot with probability of age on the log scale
@@ -70,7 +70,8 @@ plot.logscale = for.plot %>%
     panel.background = element_blank(),
     strip.background = element_blank(),
     strip.text = element_blank(),
-    legend.position = 'none'
+    legend.position = 'none',
+    text = element_text(family = 'ArialMT')
   )
 
 plot.legend = get_plot_component(
@@ -95,5 +96,5 @@ plot_grid(
   rel_heights = c(.2, 1, 1)
 )
 
-ggsave(filename = 'analyze_results/figs_out/figS1_age_distn.png',
+ggsave(filename = 'analyze_results/figs_out/figS2_age_distn.pdf',
        width = 8, height = 5)

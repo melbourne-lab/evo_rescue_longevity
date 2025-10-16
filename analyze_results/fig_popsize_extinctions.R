@@ -77,12 +77,14 @@ n.all %>%
   facet_grid(rows = vars(varn), cols = vars(hert), labeller = label_parsed) +
   theme(
     panel.background = element_blank(),
-    legend.position = 'top'
+    legend.position = 'top',
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analyze_results/figs_out/fig2_popsize.png',
+ggsave('analyze_results/figs_out/fig2_popsize.pdf',
        width = 5, height = 5)
 
+# The same plot, but only for first 50 time steps (nearer-term dyanmics more apparent)
 n.all %>%
   filter(t < 51) %>%
   ggplot(aes(x = t, group = long)) +
@@ -135,26 +137,12 @@ n.all %>%
   theme(
     panel.background = element_blank(),
     legend.position = 'top',
+    text = element_text(family = 'ArialMT')
   )
 
-ggsave('analyze_results/figs_out/fig3_extinctions.png',
+ggsave('analyze_results/figs_out/fig3_extinctions.pdf',
        width = 5, height = 5)
 
-n.all %>%
-  filter(t < 31) %>%
-  ggplot(aes(x = t, y = psrv)) +
-  geom_line(aes(colour = long), linewidth = 1.2) +
-  labs(x = 'Time step', y = 'Proportion surviving') +
-  scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
-  # scale_colour_manual(values = c("#E69F00", "#56B4E9", "#999999"), 'longevity')
-  # scale_colour_brewer(palette = 'Dark2', 'longevity') +
-  facet_grid(rows = vars(varn), cols = vars(hert), labeller = label_parsed, scales = 'free_y') +
-  theme(
-    panel.background = element_blank(),
-    legend.position = 'top',
-  )
-
-# This figure is ugly.
 
 ### Table S2: First extinction time for each treatment
 

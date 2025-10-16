@@ -1,6 +1,6 @@
 ### Code for re-creating figures of phenotypic component means and variances
 ### from the shorter batch (200 sims only) over time.
-### (In the MS so far these are Figs. 4 and 6)
+### (In the MS these are Figs. 4 and 6)
 
 # Setup
 library(ggplot2)
@@ -67,7 +67,7 @@ z.var = z.com %>%
 
 head(z.var)
 
-# Plot of components over time
+# Plot of component means over time (Fig. 4)
 z.bar %>% 
   # For only extant populations
   filter(nn == trys.per) %>%
@@ -118,12 +118,17 @@ z.bar %>%
     linetype = guide_legend(order = 1, override.aes = list(linewidth = 1))
   ) +
   facet_wrap(~ hert, labeller = labeller(hert = label_parsed)) +
-  theme(panel.background = element_blank(), legend.position = 'top')
+  theme(
+    panel.background = element_blank(), 
+    legend.position = 'top',
+    text = element_text(family = 'ArialMT')
+  )
 
-ggsave('analyze_results/figs_out/fig4_pheno_comp_mean.png',
+ggsave('analyze_results/figs_out/fig4_pheno_comp_mean.pdf',
        width = 8, height = 3)
 
 
+# Phenotypic component variance plot (Fig. 6)
 z.var %>% 
   # Get only extant populations
   # get rid of 'w' vars - i.e., variance components after selection
@@ -169,57 +174,11 @@ z.var %>%
   labs(x = 'Time step', y = 'Value') +
   guides(linetype = guide_legend(order = 2, override.aes = list(linewidth = 1))) +
   facet_wrap(~ hert, labeller = labeller(hert = label_parsed)) +
-  theme(panel.background = element_blank(), legend.position = 'top')
+  theme(
+    panel.background = element_blank(), 
+    legend.position = 'top',
+    text = element_text(family = 'ArialMT')
+  )
 
-ggsave('analyze_results/figs_out/fig6_pheno_comp_vars.png',
+ggsave('analyze_results/figs_out/fig6_pheno_comp_vars.pdf',
        width = 8, height = 3)
-
-# # Plot of components after selection
-# z.var %>% 
-#   # Get only extant populations
-#   # get only the 'w' vars - i.e., variance components after selection
-#   filter(nn == trys.per, grepl('w', comp)) %>%
-#   ungroup() %>%
-#   # Factor for plotting aesthetics
-#   mutate(
-#     long = factor(p0, labels = c('high', 'medium', 'low')),
-#     # hert = factor(paste0('heritability ', h2)),
-#     hert = factor(paste0("h^2 == ", h2)),
-#     comp = relevel(factor(comp), ref = 'zvarw')
-#   ) %>%
-#   ggplot(aes(x = t)) +
-#   geom_ribbon(
-#     aes(
-#       ymin = bar - 2 * sqrt(var / nn),
-#       ymax = bar + 2 * sqrt(var / nn),
-#       group = interaction(comp, long),
-#       fill = long
-#     ),
-#     alpha = 0.2
-#   ) +
-#   geom_line(
-#     aes(
-#       y = bar,
-#       group = interaction(comp, long),
-#       colour = long,
-#       linetype = comp
-#     ),
-#     linewidth = 1.1
-#   ) +
-#   scale_linetype(
-#     'component', 
-#     labels = c(expression(gamma^2), expression(gamma[a]^2), expression(gamma[e]^2))
-#   ) +
-#   scale_colour_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
-#   scale_fill_manual(values = c("#999999", "#56B4E9", "#E69F00"), 'longevity') +
-#   # scale_colour_brewer(palette = 'Dark2', 'longevity') +
-#   # scale_fill_brewer(palette = 'Dark2', 'longevity') +
-#   scale_y_continuous(limits = c(0, 0.75)) +
-#   labs(x = 'Time step', y = 'Value') +
-#   guides(linetype = guide_legend(order = 2, override.aes = list(linewidth = 1))) +
-#   facet_wrap(~ hert, labeller = labeller(hert = label_parsed)) +
-#   theme(panel.background = element_blank(), legend.position = 'top')
-# 
-# ggsave('analyze_results/figs_out/figS3_pheno_comp_vars_postsel.png',
-#        width = 8, height = 3)
-

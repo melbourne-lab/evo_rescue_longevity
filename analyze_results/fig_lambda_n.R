@@ -76,7 +76,8 @@ lambda.plot = lambda.z %>%
   # scale_linetype_manual(values = c(1, 5, 2)) +
   theme(
     panel.background = element_blank(),
-    legend.position = 'none'
+    legend.position = 'none',
+    text = element_text(family = 'ArialMT')
   )
 
 lambda.plot
@@ -112,7 +113,8 @@ n.plot = g.and.h %>%
   labs(x = expression(Time ~ step ~ t), y = expression(N[t])) +
   theme(
     panel.background = element_blank(),
-    legend.position = 'none'
+    legend.position = 'none',
+    text = element_text(family = 'ArialMT')
   )
 
 n.plot
@@ -124,6 +126,7 @@ fig.hypo.legend = get_plot_component(
     theme(legend.position = 'top'),
   'guide-box', return_all = TRUE
 )[[4]]
+
 
 plot_grid(
   fig.hypo.legend,
@@ -137,5 +140,5 @@ plot_grid(
   nrow = 2
 )
 
-ggsave(filename = 'analyze_results/figs_out/fig1_lambda_n.png',
+ggsave(filename = 'analyze_results/figs_out/fig1_lambda_n.pdf',
        width = 8, height = 3)
